@@ -46,5 +46,6 @@ Simply open the corresponding HTML file in your browser to use the tool.
 
 ## 5. Contribution / 贡献
 
-Contributions, issues, and feature requests are welcome. Feel free to check [issues page](https://github.com/your-username/your-repo/issues).
+Contributions, issues, and feature requests are welcome. Feel free to check Contributions, issues, and feature requests are welcome. Feel free to check [issues page](https://github.com/bjlida/teacherprograms/issues)..
+
 欢迎提交问题和建议，共同完善这些工具。

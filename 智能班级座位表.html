@@ -1,0 +1,1457 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能班级座位表管理系统</title>
+    <style>
+        :root {
+            --primary-color: #4285f4;
+            --secondary-color: #34a853;
+            --accent-color: #ea4335;
+            --background-color: #f5f5f5;
+            --text-color: #333;
+            --seat-color: #ffffff;
+            --border-color: #ddd;
+        }
+
+        .theme-dark {
+            --primary-color: #5c6bc0;
+            --secondary-color: #66bb6a;
+            --accent-color: #ef5350;
+            --background-color: #121212;
+            --text-color: #e0e0e0;
+            --seat-color: #1e1e1e;
+            --border-color: #333;
+        }
+
+        .theme-classic {
+            --primary-color: #3f51b5;
+            --secondary-color: #009688;
+            --accent-color: #ff5722;
+            --background-color: #f5f5f5;
+            --text-color: #212121;
+            --seat-color: #ffffff;
+            --border-color: #bdbdbd;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Microsoft YaHei', sans-serif;
+        }
+
+        body {
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        h1 {
+            color: var(--primary-color);
+        }
+
+        .theme-selector {
+            display: flex;
+            gap: 10px;
+        }
+
+        .theme-btn {
+            padding: 5px 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .theme-default {
+            background-color: #4285f4;
+            color: white;
+        }
+
+        .theme-dark {
+            background-color: #333;
+            color: white;
+        }
+
+        .theme-classic {
+            background-color: #3f51b5;
+            color: white;
+        }
+
+        .main-content {
+            display: flex;
+            gap: 20px;
+        }
+
+        .sidebar {
+            width: 250px;
+            background-color: var(--seat-color);
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .tab-buttons {
+            display: flex;
+            margin-bottom: 15px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 8px;
+            border: none;
+            background-color: var(--border-color);
+            cursor: pointer;
+        }
+
+        .tab-btn.active {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .student-list {
+            max-height: 300px;
+            overflow-y: auto;
+            margin-bottom: 15px;
+        }
+
+        .student-item {
+            padding: 8px;
+            margin-bottom: 5px;
+            background-color: var(--background-color);
+            border-radius: 4px;
+            cursor: move;
+            border: 1px solid var(--border-color);
+        }
+
+        .student-item:hover {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background-color: var(--seat-color);
+            color: var(--text-color);
+        }
+
+        .btn {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-secondary {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+
+        .btn-danger {
+            background-color: var(--accent-color);
+            color: white;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .classroom {
+            flex: 1;
+            background-color: var(--seat-color);
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .classroom-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .classroom-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .seating-chart {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .seating-chart td {
+            width: 100px;
+            height: 60px;
+            border: 1px solid var(--border-color);
+            text-align: center;
+            vertical-align: middle;
+            padding: 5px;
+            position: relative;
+        }
+
+        .seat {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .seat:hover {
+            background-color: rgba(66, 133, 244, 0.1);
+        }
+
+        .seat-occupied {
+            background-color: rgba(66, 133, 244, 0.2);
+            font-weight: bold;
+        }
+
+        .seat-empty {
+            color: #999;
+            font-style: italic;
+        }
+
+        .seat-number {
+            font-size: 10px;
+            color: #999;
+            position: absolute;
+            top: 2px;
+            left: 2px;
+        }
+
+        .student-details {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: var(--background-color);
+            border-radius: 8px;
+            display: none;
+        }
+
+        .student-details.active {
+            display: block;
+        }
+
+        .detail-row {
+            display: flex;
+            margin-bottom: 10px;
+        }
+
+        .detail-label {
+            width: 100px;
+            font-weight: bold;
+        }
+
+        .detail-value {
+            flex: 1;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: var(--seat-color);
+            padding: 20px;
+            border-radius: 8px;
+            width: 500px;
+            max-width: 90%;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .close-btn {
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        .history-item {
+            padding: 10px;
+            margin-bottom: 10px;
+            background-color: var(--background-color);
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .history-item:hover {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .auto-arrange-options {
+            margin-top: 15px;
+        }
+
+        .checkbox-group {
+            margin-bottom: 10px;
+        }
+
+        .checkbox-group label {
+            display: inline;
+            margin-left: 5px;
+        }
+
+        .special-requirements {
+            margin-top: 15px;
+        }
+
+        .requirement-item {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .status-bar {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: var(--background-color);
+            border-radius: 4px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>智能班级座位表管理系统</h1>
+            <div class="theme-selector">
+                <button class="theme-btn theme-default" onclick="changeTheme('default')">默认</button>
+                <button class="theme-btn theme-dark" onclick="changeTheme('dark')">暗黑</button>
+                <button class="theme-btn theme-classic" onclick="changeTheme('classic')">经典</button>
+            </div>
+        </header>
+
+        <div class="main-content">
+            <div class="sidebar">
+                <div class="tab-buttons">
+                    <button class="tab-btn active" onclick="openTab('students')">学生管理</button>
+                    <button class="tab-btn" onclick="openTab('arrange')">座位安排</button>
+                    <button class="tab-btn" onclick="openTab('history')">历史记录</button>
+                </div>
+
+                <div id="students" class="tab-content active">
+                    <div class="form-group">
+                        <label for="student-name">姓名</label>
+                        <input type="text" id="student-name" placeholder="输入学生姓名">
+                    </div>
+                    <div class="form-group">
+                        <label for="student-gender">性别</label>
+                        <select id="student-gender">
+                            <option value="男">男</option>
+                            <option value="女">女</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="student-height">身高(cm)</label>
+                        <input type="number" id="student-height" placeholder="输入学生身高">
+                    </div>
+                    <div class="form-group">
+                        <label for="student-score">成绩</label>
+                        <input type="text" id="student-score" placeholder="输入学生成绩">
+                    </div>
+                    <div class="form-group">
+                        <label for="student-notes">备注</label>
+                        <input type="text" id="student-notes" placeholder="输入备注信息">
+                    </div>
+                    <div class="btn-group">
+                        <button class="btn btn-primary" onclick="addStudent()">添加学生</button>
+                        <button class="btn btn-danger" onclick="clearForm()">清空</button>
+                    </div>
+
+                    <div class="student-list" id="student-list-container">
+                        <h3>学生列表</h3>
+                        <input type="text" id="search-student" placeholder="搜索学生..." oninput="searchStudents()">
+                        <div id="student-list">
+                            <!-- 学生列表将在这里动态生成 -->
+                        </div>
+                    </div>
+                </div>
+
+                <div id="arrange" class="tab-content">
+                    <h3>座位安排方式</h3>
+                    <div class="btn-group">
+                        <button class="btn btn-primary" onclick="manualArrange()">手动安排</button>
+                        <button class="btn btn-secondary" onclick="showAutoArrangeModal()">自动安排</button>
+                    </div>
+
+                    <div class="auto-arrange-options" id="auto-arrange-options" style="display: none;">
+                        <h4>自动安排选项</h4>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="arrange-by-gender" checked>
+                            <label for="arrange-by-gender">按性别交错</label>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="arrange-by-height" checked>
+                            <label for="arrange-by-height">按身高排序</label>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="arrange-by-score">
+                            <label for="arrange-by-score">按成绩互补</label>
+                        </div>
+                        <button class="btn btn-primary" onclick="autoArrange()">开始自动安排</button>
+                    </div>
+
+                    <div class="special-requirements">
+                        <h4>特殊要求</h4>
+                        <div class="requirement-item">
+                            <select id="requirement-student1">
+                                <option value="">选择学生</option>
+                            </select>
+                            <select id="requirement-type">
+                                <option value="together">必须相邻</option>
+                                <option value="apart">必须分开</option>
+                            </select>
+                            <select id="requirement-student2">
+                                <option value="">选择学生</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-secondary" onclick="addRequirement()">添加要求</button>
+                        <div id="requirements-list">
+                            <!-- 特殊要求将在这里显示 -->
+                        </div>
+                    </div>
+                </div>
+
+                <div id="history" class="tab-content">
+                    <h3>历史记录</h3>
+                    <div id="history-list">
+                        <!-- 历史记录将在这里动态生成 -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="classroom">
+                <div class="classroom-header">
+                    <h2>班级座位表</h2>
+                    <div class="classroom-actions">
+                        <button class="btn btn-primary" onclick="saveSeating()">保存</button>
+                        <button class="btn btn-secondary" onclick="showExportModal()">导出</button>
+                        <button class="btn" onclick="printSeating()">打印</button>
+                        <button class="btn btn-danger" onclick="clearSeating()">清空</button>
+                    </div>
+                </div>
+
+                <div id="seating-container">
+                    <table class="seating-chart" id="seating-chart">
+                        <!-- 座位表将在这里动态生成 -->
+                    </table>
+                </div>
+
+                <div class="student-details" id="student-details">
+                    <div class="detail-row">
+                        <div class="detail-label">姓名:</div>
+                        <div class="detail-value" id="detail-name"></div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">性别:</div>
+                        <div class="detail-value" id="detail-gender"></div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">身高:</div>
+                        <div class="detail-value" id="detail-height"></div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">成绩:</div>
+                        <div class="detail-value" id="detail-score"></div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">备注:</div>
+                        <div class="detail-value" id="detail-notes"></div>
+                    </div>
+                    <div class="btn-group">
+                        <button class="btn btn-primary" onclick="moveStudent()">调整位置</button>
+                        <button class="btn btn-danger" onclick="removeFromSeat()">移出座位</button>
+                    </div>
+                </div>
+
+                <div class="status-bar" id="status-bar">
+                    就绪
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 导出模态框 -->
+    <div class="modal" id="export-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>导出座位表</h3>
+                <span class="close-btn" onclick="closeModal('export-modal')">&times;</span>
+            </div>
+            <div class="form-group">
+                <label>导出格式</label>
+                <select id="export-format">
+                    <option value="excel">Excel</option>
+                    <option value="pdf">PDF</option>
+                    <option value="image">图片</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>包含信息</label>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="export-student-info" checked>
+                    <label for="export-student-info">学生基本信息</label>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="export-seat-numbers" checked>
+                    <label for="export-seat-numbers">座位编号</label>
+                </div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="exportSeating()">导出</button>
+                <button class="btn" onclick="closeModal('export-modal')">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 自动安排模态框 -->
+    <div class="modal" id="auto-arrange-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>自动座位安排</h3>
+                <span class="close-btn" onclick="closeModal('auto-arrange-modal')">&times;</span>
+            </div>
+            <div class="form-group">
+                <label>安排策略</label>
+                <select id="arrange-strategy">
+                    <option value="gender-height">性别交错 + 身高排序</option>
+                    <option value="score-balance">成绩平衡</option>
+                    <option value="random">随机安排</option>
+                    <option value="custom">自定义</option>
+                </select>
+            </div>
+            <div id="custom-options" style="display: none;">
+                <div class="checkbox-group">
+                    <input type="checkbox" id="opt-gender" checked>
+                    <label for="opt-gender">性别交错</label>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="opt-height" checked>
+                    <label for="opt-height">身高排序 (矮在前)</label>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="opt-score">
+                    <label for="opt-score">成绩互补</label>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>教室布局</label>
+                <select id="classroom-layout">
+                    <option value="6x4">6列4排 (24人)</option>
+                    <option value="5x5">5列5排 (25人)</option>
+                    <option value="7x4">7列4排 (28人)</option>
+                    <option value="custom">自定义</option>
+                </select>
+            </div>
+            <div id="custom-layout" style="display: none;">
+                <div class="form-group">
+                    <label>列数</label>
+                    <input type="number" id="custom-cols" min="1" max="10" value="6">
+                </div>
+                <div class="form-group">
+                    <label>排数</label>
+                    <input type="number" id="custom-rows" min="1" max="10" value="4">
+                </div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="performAutoArrange()">开始安排</button>
+                <button class="btn" onclick="closeModal('auto-arrange-modal')">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 全局变量
+        let students = [];
+        let seating = [];
+        let history = [];
+        let requirements = [];
+        let selectedSeat = null;
+        let selectedStudent = null;
+        let isManualArrangeMode = false;
+
+        // 初始化函数
+        function init() {
+            // 从本地存储加载数据
+            loadData();
+            
+            // 生成默认座位表
+            generateSeatingChart(6, 4);
+            
+            // 更新学生列表
+            updateStudentList();
+            
+            // 更新历史记录
+            updateHistoryList();
+            
+            // 设置拖放功能
+            setupDragAndDrop();
+            
+            // 更新状态栏
+            updateStatus('系统已就绪');
+        }
+
+        // 从本地存储加载数据
+        function loadData() {
+            const savedStudents = localStorage.getItem('classroom-students');
+            const savedSeating = localStorage.getItem('classroom-seating');
+            const savedHistory = localStorage.getItem('classroom-history');
+            const savedRequirements = localStorage.getItem('classroom-requirements');
+            
+            if (savedStudents) {
+                students = JSON.parse(savedStudents);
+            }
+            
+            if (savedSeating) {
+                seating = JSON.parse(savedSeating);
+            }
+            
+            if (savedHistory) {
+                history = JSON.parse(savedHistory);
+            }
+            
+            if (savedRequirements) {
+                requirements = JSON.parse(savedRequirements);
+            }
+        }
+
+        // 保存数据到本地存储
+        function saveData() {
+            localStorage.setItem('classroom-students', JSON.stringify(students));
+            localStorage.setItem('classroom-seating', JSON.stringify(seating));
+            localStorage.setItem('classroom-history', JSON.stringify(history));
+            localStorage.setItem('classroom-requirements', JSON.stringify(requirements));
+        }
+
+        // 生成座位表
+        function generateSeatingChart(cols, rows) {
+            const table = document.getElementById('seating-chart');
+            table.innerHTML = '';
+            
+            seating = [];
+            
+            for (let row = 0; row < rows; row++) {
+                const tr = document.createElement('tr');
+                seating[row] = [];
+                
+                for (let col = 0; col < cols; col++) {
+                    const td = document.createElement('td');
+                    const seatNumber = row * cols + col + 1;
+                    
+                    td.innerHTML = `
+                        <div class="seat seat-empty" data-row="${row}" data-col="${col}" onclick="selectSeat(this)">
+                            <span class="seat-number">${seatNumber}</span>
+                            空座位
+                        </div>
+                    `;
+                    
+                    tr.appendChild(td);
+                    seating[row][col] = null;
+                }
+                
+                table.appendChild(tr);
+            }
+        }
+
+        // 更新学生列表
+        function updateStudentList() {
+            const studentList = document.getElementById('student-list');
+            studentList.innerHTML = '';
+            
+            students.forEach((student, index) => {
+                const div = document.createElement('div');
+                div.className = 'student-item';
+                div.textContent = `${student.name} (${student.gender})`;
+                div.setAttribute('data-id', student.id);
+                div.setAttribute('draggable', 'true');
+                studentList.appendChild(div);
+            });
+            
+            // 更新特殊要求下拉列表
+            updateRequirementDropdowns();
+        }
+
+        // 更新历史记录列表
+        function updateHistoryList() {
+            const historyList = document.getElementById('history-list');
+            historyList.innerHTML = '';
+            
+            history.forEach((record, index) => {
+                const div = document.createElement('div');
+                div.className = 'history-item';
+                div.innerHTML = `
+                    <strong>${record.date}</strong><br>
+                    ${record.type} - ${record.description}
+                `;
+                div.onclick = () => restoreHistory(index);
+                historyList.appendChild(div);
+            });
+        }
+
+        // 更新特殊要求下拉列表
+        function updateRequirementDropdowns() {
+            const dropdown1 = document.getElementById('requirement-student1');
+            const dropdown2 = document.getElementById('requirement-student2');
+            
+            dropdown1.innerHTML = '<option value="">选择学生</option>';
+            dropdown2.innerHTML = '<option value="">选择学生</option>';
+            
+            students.forEach(student => {
+                const option1 = document.createElement('option');
+                option1.value = student.id;
+                option1.textContent = student.name;
+                
+                const option2 = document.createElement('option');
+                option2.value = student.id;
+                option2.textContent = student.name;
+                
+                dropdown1.appendChild(option1);
+                dropdown2.appendChild(option2);
+            });
+            
+            // 更新要求列表显示
+            updateRequirementsList();
+        }
+
+        // 更新要求列表显示
+        function updateRequirementsList() {
+            const list = document.getElementById('requirements-list');
+            list.innerHTML = '';
+            
+            requirements.forEach((req, index) => {
+                const student1 = students.find(s => s.id === req.student1);
+                const student2 = students.find(s => s.id === req.student2);
+                
+                if (student1 && student2) {
+                    const div = document.createElement('div');
+                    div.className = 'requirement-item';
+                    div.innerHTML = `
+                        ${student1.name} <strong>${req.type === 'together' ? '必须相邻' : '必须分开'}</strong> ${student2.name}
+                        <button class="btn btn-danger" onclick="removeRequirement(${index})">删除</button>
+                    `;
+                    list.appendChild(div);
+                }
+            });
+        }
+
+        // 添加学生
+        function addStudent() {
+            const name = document.getElementById('student-name').value.trim();
+            const gender = document.getElementById('student-gender').value;
+            const height = parseInt(document.getElementById('student-height').value) || 0;
+            const score = document.getElementById('student-score').value.trim();
+            const notes = document.getElementById('student-notes').value.trim();
+            
+            if (!name) {
+                alert('请输入学生姓名');
+                return;
+            }
+            
+            const student = {
+                id: Date.now(),
+                name,
+                gender,
+                height,
+                score,
+                notes,
+                seated: false
+            };
+            
+            students.push(student);
+            saveData();
+            updateStudentList();
+            clearForm();
+            
+            updateStatus(`已添加学生: ${name}`);
+        }
+
+        // 清空表单
+        function clearForm() {
+            document.getElementById('student-name').value = '';
+            document.getElementById('student-height').value = '';
+            document.getElementById('student-score').value = '';
+            document.getElementById('student-notes').value = '';
+        }
+
+        // 搜索学生
+        function searchStudents() {
+            const searchTerm = document.getElementById('search-student').value.toLowerCase();
+            const studentItems = document.querySelectorAll('#student-list .student-item');
+            
+            studentItems.forEach(item => {
+                const text = item.textContent.toLowerCase();
+                if (text.includes(searchTerm)) {
+                    item.style.display = 'block';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        }
+
+        // 切换标签页
+        function openTab(tabName) {
+            const tabContents = document.querySelectorAll('.tab-content');
+            const tabButtons = document.querySelectorAll('.tab-btn');
+            
+            tabContents.forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            tabButtons.forEach(button => {
+                button.classList.remove('active');
+            });
+            
+            document.getElementById(tabName).classList.add('active');
+            event.currentTarget.classList.add('active');
+        }
+
+        // 选择座位
+        function selectSeat(element) {
+            const row = parseInt(element.getAttribute('data-row'));
+            const col = parseInt(element.getAttribute('data-col'));
+            
+            // 清除之前选中的座位样式
+            const prevSelected = document.querySelector('.seat-selected');
+            if (prevSelected) {
+                prevSelected.classList.remove('seat-selected');
+            }
+            
+            // 设置当前选中座位样式
+            element.classList.add('seat-selected');
+            selectedSeat = { row, col };
+            
+            // 显示学生详情
+            const student = seating[row][col];
+            if (student) {
+                showStudentDetails(student);
+                selectedStudent = student;
+            } else {
+                hideStudentDetails();
+                selectedStudent = null;
+            }
+            
+            // 如果是手动安排模式，提示选择学生
+            if (isManualArrangeMode && !student) {
+                updateStatus('请从学生列表拖动学生到此座位');
+            }
+        }
+
+        // 显示学生详情
+        function showStudentDetails(student) {
+            document.getElementById('detail-name').textContent = student.name;
+            document.getElementById('detail-gender').textContent = student.gender;
+            document.getElementById('detail-height').textContent = student.height + ' cm';
+            document.getElementById('detail-score').textContent = student.score;
+            document.getElementById('detail-notes').textContent = student.notes;
+            
+            document.getElementById('student-details').classList.add('active');
+        }
+
+        // 隐藏学生详情
+        function hideStudentDetails() {
+            document.getElementById('student-details').classList.remove('active');
+        }
+
+        // 设置拖放功能
+        function setupDragAndDrop() {
+            const studentItems = document.getElementById('student-list');
+            const seats = document.getElementById('seating-chart');
+            
+            // 设置学生列表可拖动
+            studentItems.addEventListener('dragstart', event => {
+                if (event.target.classList.contains('student-item')) {
+                    const studentId = event.target.getAttribute('data-id');
+                    event.dataTransfer.setData('text/plain', studentId);
+                    event.dataTransfer.effectAllowed = 'copy';
+                }
+            });
+            
+            // 设置座位表可放置
+            seats.addEventListener('dragover', event => {
+                event.preventDefault();
+                event.dataTransfer.dropEffect = 'copy';
+            });
+            
+            seats.addEventListener('drop', event => {
+                event.preventDefault();
+                
+                const studentId = event.dataTransfer.getData('text/plain');
+                let seatElement = event.target.closest('.seat');
+                
+                if (studentId && seatElement) {
+                    const row = parseInt(seatElement.getAttribute('data-row'));
+                    const col = parseInt(seatElement.getAttribute('data-col'));
+                    
+                    assignStudentToSeat(studentId, row, col);
+                }
+            });
+        }
+
+        // 分配学生到座位
+        function assignStudentToSeat(studentId, row, col) {
+            const student = students.find(s => s.id.toString() === studentId);
+            
+            if (!student) return;
+            
+            // 检查学生是否已经在其他座位
+            for (let r = 0; r < seating.length; r++) {
+                for (let c = 0; c < seating[r].length; c++) {
+                    if (seating[r][c] && seating[r][c].id === student.id) {
+                        seating[r][c] = null;
+                        updateSeatDisplay(r, c);
+                    }
+                }
+            }
+            
+            // 检查目标座位是否已有学生
+            if (seating[row][col]) {
+                const confirmMove = confirm(`该座位已有学生 ${seating[row][col].name}，是否替换？`);
+                if (!confirmMove) return;
+            }
+            
+            // 分配座位
+            seating[row][col] = student;
+            student.seated = true;
+            updateSeatDisplay(row, col);
+            
+            // 检查特殊要求
+            checkRequirements();
+            
+            updateStatus(`已将 ${student.name} 分配到座位 ${row * seating[0].length + col + 1}`);
+        }
+
+        // 更新座位显示
+        function updateSeatDisplay(row, col) {
+            const seatElement = document.querySelector(`.seat[data-row="${row}"][data-col="${col}"]`);
+            
+            if (seating[row][col]) {
+                const student = seating[row][col];
+                seatElement.innerHTML = `
+                    <span class="seat-number">${row * seating[0].length + col + 1}</span>
+                    ${student.name}<br>${student.gender}
+                `;
+                seatElement.classList.remove('seat-empty');
+                seatElement.classList.add('seat-occupied');
+            } else {
+                seatElement.innerHTML = `
+                    <span class="seat-number">${row * seating[0].length + col + 1}</span>
+                    空座位
+                `;
+                seatElement.classList.add('seat-empty');
+                seatElement.classList.remove('seat-occupied');
+            }
+        }
+
+        // 移出座位中的学生
+        function removeFromSeat() {
+            if (!selectedSeat || !seating[selectedSeat.row][selectedSeat.col]) return;
+            
+            const student = seating[selectedSeat.row][selectedSeat.col];
+            seating[selectedSeat.row][selectedSeat.col] = null;
+            student.seated = false;
+            
+            updateSeatDisplay(selectedSeat.row, selectedSeat.col);
+            hideStudentDetails();
+            
+            updateStatus(`已将 ${student.name} 从座位移出`);
+        }
+
+        // 调整学生位置
+        function moveStudent() {
+            if (!selectedSeat || !selectedStudent) return;
+            
+            isManualArrangeMode = true;
+            updateStatus(`请点击目标座位移动 ${selectedStudent.name}`);
+            
+            // 设置所有空座位为可移动状态
+            const seats = document.querySelectorAll('.seat');
+            seats.forEach(seat => {
+                if (seat.classList.contains('seat-empty')) {
+                    seat.classList.add('seat-movable');
+                    seat.onclick = function() {
+                        const row = parseInt(this.getAttribute('data-row'));
+                        const col = parseInt(this.getAttribute('data-col'));
+                        
+                        // 移动学生
+                        seating[selectedSeat.row][selectedSeat.col] = null;
+                        seating[row][col] = selectedStudent;
+                        
+                        // 更新显示
+                        updateSeatDisplay(selectedSeat.row, selectedSeat.col);
+                        updateSeatDisplay(row, col);
+                        
+                        // 重置状态
+                        resetMoveState();
+                        
+                        updateStatus(`已将 ${selectedStudent.name} 移动到新座位`);
+                    };
+                }
+            });
+        }
+
+        // 重置移动状态
+        function resetMoveState() {
+            isManualArrangeMode = false;
+            
+            const seats = document.querySelectorAll('.seat');
+            seats.forEach(seat => {
+                seat.classList.remove('seat-movable');
+                seat.onclick = function() {
+                    selectSeat(this);
+                };
+            });
+        }
+
+        // 手动安排模式
+        function manualArrange() {
+            isManualArrangeMode = true;
+            updateStatus('手动安排模式: 从学生列表拖动学生到座位');
+        }
+
+        // 显示自动安排模态框
+        function showAutoArrangeModal() {
+            document.getElementById('auto-arrange-modal').style.display = 'flex';
+        }
+
+        // 关闭模态框
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        // 执行自动安排
+        function performAutoArrange() {
+            const strategy = document.getElementById('arrange-strategy').value;
+            const layout = document.getElementById('classroom-layout').value;
+            
+            let cols, rows;
+            
+            if (layout === 'custom') {
+                cols = parseInt(document.getElementById('custom-cols').value);
+                rows = parseInt(document.getElementById('custom-rows').value);
+            } else {
+                const layoutParts = layout.split('x');
+                cols = parseInt(layoutParts[0]);
+                rows = parseInt(layoutParts[1]);
+            }
+            
+            // 生成新的座位表
+            generateSeatingChart(cols, rows);
+            
+            // 根据策略安排座位
+            let arrangedStudents = [...students];
+            
+            if (strategy === 'gender-height' || (strategy === 'custom' && document.getElementById('opt-gender').checked && document.getElementById('opt-height').checked)) {
+                // 按性别交错和身高排序
+                arrangedStudents.sort((a, b) => a.height - b.height);
+                
+                let maleIndex = 0;
+                let femaleIndex = 0;
+                const males = arrangedStudents.filter(s => s.gender === '男');
+                const females = arrangedStudents.filter(s => s.gender === '女');
+                
+                arrangedStudents = [];
+                while (maleIndex < males.length || femaleIndex < females.length) {
+                    if (maleIndex < males.length) arrangedStudents.push(males[maleIndex++]);
+                    if (femaleIndex < females.length) arrangedStudents.push(females[femaleIndex++]);
+                }
+            } else if (strategy === 'score-balance' || (strategy === 'custom' && document.getElementById('opt-score').checked)) {
+                // 按成绩平衡
+                arrangedStudents.sort((a, b) => {
+                    const scoreA = parseFloat(a.score) || 0;
+                    const scoreB = parseFloat(b.score) || 0;
+                    return scoreB - scoreA;
+                });
+                
+                const balanced = [];
+                let left = 0;
+                let right = arrangedStudents.length - 1;
+                
+                while (left <= right) {
+                    if (left === right) {
+                        balanced.push(arrangedStudents[left]);
+                    } else {
+                        balanced.push(arrangedStudents[left]);
+                        balanced.push(arrangedStudents[right]);
+                    }
+                    left++;
+                    right--;
+                }
+                
+                arrangedStudents = balanced;
+            } else if (strategy === 'random') {
+                // 随机安排
+                for (let i = arrangedStudents.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [arrangedStudents[i], arrangedStudents[j]] = [arrangedStudents[j], arrangedStudents[i]];
+                }
+            }
+            
+            // 分配座位
+            let studentIndex = 0;
+            for (let row = 0; row < rows && studentIndex < arrangedStudents.length; row++) {
+                for (let col = 0; col < cols && studentIndex < arrangedStudents.length; col++) {
+                    seating[row][col] = arrangedStudents[studentIndex++];
+                    updateSeatDisplay(row, col);
+                }
+            }
+            
+            // 检查特殊要求
+            checkRequirements();
+            
+            // 添加历史记录
+            addHistoryRecord('自动安排', `使用策略: ${strategy}, 布局: ${cols}x${rows}`);
+            
+            // 关闭模态框
+            closeModal('auto-arrange-modal');
+            
+            updateStatus('自动座位安排已完成');
+        }
+
+        // 检查特殊要求
+        function checkRequirements() {
+            let violations = 0;
+            
+            requirements.forEach(req => {
+                const student1 = students.find(s => s.id === req.student1);
+                const student2 = students.find(s => s.id === req.student2);
+                
+                if (!student1 || !student2) return;
+                
+                let seat1 = null, seat2 = null;
+                
+                // 查找两个学生的座位
+                for (let row = 0; row < seating.length; row++) {
+                    for (let col = 0; col < seating[row].length; col++) {
+                        if (seating[row][col] && seating[row][col].id === student1.id) {
+                            seat1 = { row, col };
+                        }
+                        if (seating[row][col] && seating[row][col].id === student2.id) {
+                            seat2 = { row, col };
+                        }
+                    }
+                }
+                
+                if (!seat1 || !seat2) return;
+                
+                // 计算座位距离
+                const rowDiff = Math.abs(seat1.row - seat2.row);
+                const colDiff = Math.abs(seat1.col - seat2.col);
+                const distance = rowDiff + colDiff;
+                
+                // 检查要求
+                if (req.type === 'together' && distance > 1) {
+                    violations++;
+                    highlightRequirementViolation(seat1, seat2);
+                } else if (req.type === 'apart' && distance <= 1) {
+                    violations++;
+                    highlightRequirementViolation(seat1, seat2);
+                }
+            });
+            
+            if (violations > 0) {
+                updateStatus(`警告: 发现 ${violations} 处特殊要求冲突`, 'warning');
+            }
+        }
+
+        // 高亮显示要求冲突
+        function highlightRequirementViolation(seat1, seat2) {
+            const seatElement1 = document.querySelector(`.seat[data-row="${seat1.row}"][data-col="${seat1.col}"]`);
+            const seatElement2 = document.querySelector(`.seat[data-row="${seat2.row}"][data-col="${seat2.col}"]`);
+            
+            seatElement1.classList.add('seat-violation');
+            seatElement2.classList.add('seat-violation');
+            
+            setTimeout(() => {
+                seatElement1.classList.remove('seat-violation');
+                seatElement2.classList.remove('seat-violation');
+            }, 3000);
+        }
+
+        // 添加特殊要求
+        function addRequirement() {
+            const student1 = document.getElementById('requirement-student1').value;
+            const student2 = document.getElementById('requirement-student2').value;
+            const type = document.getElementById('requirement-type').value;
+            
+            if (!student1 || !student2) {
+                alert('请选择两个学生');
+                return;
+            }
+            
+            if (student1 === student2) {
+                alert('不能选择同一个学生');
+                return;
+            }
+            
+            // 检查是否已存在相同要求
+            const exists = requirements.some(req => 
+                (req.student1 === student1 && req.student2 === student2 && req.type === type) ||
+                (req.student1 === student2 && req.student2 === student1 && req.type === type)
+            );
+            
+            if (exists) {
+                alert('该要求已存在');
+                return;
+            }
+            
+            requirements.push({
+                student1,
+                student2,
+                type
+            });
+            
+            saveData();
+            updateRequirementsList();
+            checkRequirements();
+            
+            updateStatus('已添加特殊要求');
+        }
+
+        // 移除特殊要求
+        function removeRequirement(index) {
+            requirements.splice(index, 1);
+            saveData();
+            updateRequirementsList();
+            
+            updateStatus('已移除特殊要求');
+        }
+
+        // 保存座位安排
+        function saveSeating() {
+            saveData();
+            
+            // 添加历史记录
+            addHistoryRecord('手动保存', '当前座位安排已保存');
+            
+            updateStatus('座位安排已保存');
+        }
+
+        // 添加历史记录
+        function addHistoryRecord(type, description) {
+            history.push({
+                date: new Date().toLocaleString(),
+                type,
+                description,
+                seating: JSON.parse(JSON.stringify(seating))
+            });
+            
+            // 只保留最近的20条记录
+            if (history.length > 20) {
+                history.shift();
+            }
+            
+            saveData();
+            updateHistoryList();
+        }
+
+        // 恢复历史记录
+        function restoreHistory(index) {
+            if (index < 0 || index >= history.length) return;
+            
+            const record = history[index];
+            seating = JSON.parse(JSON.stringify(record.seating));
+            
+            // 更新座位显示
+            for (let row = 0; row < seating.length; row++) {
+                for (let col = 0; col < seating[row].length; col++) {
+                    updateSeatDisplay(row, col);
+                }
+            }
+            
+            // 更新学生 seated 状态
+            students.forEach(student => {
+                student.seated = false;
+                for (let row = 0; row < seating.length; row++) {
+                    for (let col = 0; col < seating[row].length; col++) {
+                        if (seating[row][col] && seating[row][col].id === student.id) {
+                            student.seated = true;
+                        }
+                    }
+                }
+            });
+            
+            updateStatus(`已恢复历史记录: ${record.date}`);
+        }
+
+        // 显示导出模态框
+        function showExportModal() {
+            document.getElementById('export-modal').style.display = 'flex';
+        }
+
+        // 导出座位表
+        function exportSeating() {
+            const format = document.getElementById('export-format').value;
+            
+            // 在实际应用中，这里应该实现真正的导出功能
+            // 这里只是一个模拟
+            
+            let exportData = '';
+            
+            if (format === 'excel') {
+                exportData = '生成Excel文件...';
+            } else if (format === 'pdf') {
+                exportData = '生成PDF文件...';
+            } else if (format === 'image') {
+                exportData = '生成图片文件...';
+            }
+            
+            // 模拟导出
+            setTimeout(() => {
+                closeModal('export-modal');
+                updateStatus(`座位表已导出为${format.toUpperCase()}格式`);
+                alert(`座位表已导出为${format.toUpperCase()}格式`);
+            }, 1000);
+        }
+
+        // 打印座位表
+        function printSeating() {
+            // 在实际应用中，这里应该实现打印功能
+            // 这里只是一个模拟
+            updateStatus('准备打印座位表...');
+            setTimeout(() => {
+                alert('打印功能在实际应用中会打开打印对话框');
+            }, 500);
+        }
+
+        // 清空座位表
+        function clearSeating() {
+            if (confirm('确定要清空所有座位安排吗？')) {
+                for (let row = 0; row < seating.length; row++) {
+                    for (let col = 0; col < seating[row].length; col++) {
+                        if (seating[row][col]) {
+                            const student = seating[row][col];
+                            student.seated = false;
+                            seating[row][col] = null;
+                            updateSeatDisplay(row, col);
+                        }
+                    }
+                }
+                
+                addHistoryRecord('清空', '所有座位已清空');
+                updateStatus('座位表已清空');
+            }
+        }
+
+        // 更新状态栏
+        function updateStatus(message, type = 'info') {
+            const statusBar = document.getElementById('status-bar');
+            statusBar.textContent = message;
+            
+            // 根据类型设置不同样式
+            statusBar.style.color = '';
+            statusBar.style.backgroundColor = '';
+            
+            if (type === 'warning') {
+                statusBar.style.color = 'white';
+                statusBar.style.backgroundColor = 'var(--accent-color)';
+            } else if (type === 'success') {
+                statusBar.style.color = 'white';
+                statusBar.style.backgroundColor = 'var(--secondary-color)';
+            }
+        }
+
+        // 切换主题
+        function changeTheme(theme) {
+            document.body.className = '';
+            
+            if (theme === 'dark') {
+                document.body.classList.add('theme-dark');
+            } else if (theme === 'classic') {
+                document.body.classList.add('theme-classic');
+            }
+            
+            // 保存主题偏好
+            localStorage.setItem('classroom-theme', theme);
+        }
+
+        // 加载主题偏好
+        function loadTheme() {
+            const savedTheme = localStorage.getItem('classroom-theme') || 'default';
+            changeTheme(savedTheme);
+        }
+
+        // 页面加载完成后初始化
+        window.onload = function() {
+            loadTheme();
+            init();
+            
+            // 监听策略选择变化
+            document.getElementById('arrange-strategy').addEventListener('change', function() {
+                document.getElementById('custom-options').style.display = 
+                    this.value === 'custom' ? 'block' : 'none';
+            });
+            
+            // 监听布局选择变化
+            document.getElementById('classroom-layout').addEventListener('change', function() {
+                document.getElementById('custom-layout').style.display = 
+                    this.value === 'custom' ? 'block' : 'none';
+            });
+        };
+    </script>
+</body>
+</html>

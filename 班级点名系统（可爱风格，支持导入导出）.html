@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>可爱风随机点名</title>
+    <style>
+        :root {
+            --primary-color: #FF9AA2;
+            --secondary-color: #FFB7B2;
+            --accent-color: #FFDAC1;
+            --light-color: #E2F0CB;
+            --dark-color: #B5EAD7;
+            --text-color: #5E5346;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Comic Sans MS', 'Marker Felt', '微软雅黑', sans-serif;
+        }
+        
+        body {
+            background-color: var(--light-color);
+            color: var(--text-color);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            background-image: radial-gradient(circle at 10% 20%, rgba(255, 186, 195, 0.2) 0%, rgba(181, 234, 215, 0.2) 90%);
+        }
+        
+        h1 {
+            color: var(--primary-color);
+            font-size: 2.8rem;
+            margin: 20px 0;
+            text-align: center;
+            text-shadow: 3px 3px 0px rgba(255, 154, 162, 0.2);
+            position: relative;
+            display: inline-block;
+        }
+        
+        h1::after {
+            content: "";
+            position: absolute;
+            bottom: -10px;
+            left: 0;
+            width: 100%;
+            height: 15px;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 10" preserveAspectRatio="none"><path d="M0,5 Q25,10 50,5 T100,5" fill="none" stroke="%23FF9AA2" stroke-width="2"/></svg>');
+            background-repeat: repeat-x;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 800px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .display-area {
+            width: 100%;
+            height: 300px;
+            background-color: white;
+            border-radius: 20px;
+            margin: 20px 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            border: 3px dashed var(--primary-color);
+            padding: 20px;
+        }
+        
+        .display-area::before {
+            content: "";
+            position: absolute;
+            top: -10px;
+            left: -10px;
+            right: -10px;
+            bottom: -10px;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><circle cx="20" cy="20" r="3" fill="%23FF9AA2" opacity="0.5"/><circle cx="50" cy="30" r="2" fill="%23FF9AA2" opacity="0.5"/><circle cx="80" cy="20" r="4" fill="%23FF9AA2" opacity="0.5"/><circle cx="30" cy="70" r="3" fill="%23FF9AA2" opacity="0.5"/><circle cx="70" cy="80" r="2" fill="%23FF9AA2" opacity="0.5"/></svg>');
+            background-repeat: repeat;
+            opacity: 0.3;
+            z-index: 0;
+        }
+        
+        .result {
+            font-size: 4rem;
+            color: var(--primary-color);
+            text-align: center;
+            z-index: 1;
+            position: relative;
+            animation: bounce 0.5s infinite alternate;
+        }
+        
+        .student-details {
+            background-color: white;
+            border-radius: 15px;
+            padding: 15px;
+            margin-top: 20px;
+            width: 80%;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            border: 2px solid var(--accent-color);
+            transform: rotate(-2deg);
+            transition: all 0.3s;
+        }
+        
+        .student-details:hover {
+            transform: rotate(1deg) scale(1.02);
+        }
+        
+        .student-details h3 {
+            color: var(--primary-color);
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+        }
+        
+        .student-details p {
+            color: var(--text-color);
+            font-size: 1.2rem;
+            margin: 5px 0;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin: 30px 0;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .btn {
+            padding: 12px 30px;
+            font-size: 1.3rem;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: bold;
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            transform-style: preserve-3d;
+        }
+        
+        .btn::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.2);
+            z-index: -1;
+            transform: translateZ(-1px);
+            border-radius: 50px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-5px) rotate(2deg);
+            box-shadow: 0 8px 20px rgba(255, 154, 162, 0.3);
+        }
+        
+        .btn-primary:active {
+            transform: translateY(0) rotate(0);
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(45deg, var(--dark-color), var(--accent-color));
+            color: var(--text-color);
+        }
+        
+        .btn-secondary:hover {
+            transform: translateY(-5px) rotate(-2deg);
+            box-shadow: 0 8px 20px rgba(181, 234, 215, 0.3);
+        }
+        
+        .student-list {
+            width: 100%;
+            max-width: 800px;
+            margin: 20px 0;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 15px;
+        }
+        
+        .student-card {
+            background: white;
+            border-radius: 15px;
+            padding: 15px;
+            transition: all 0.3s;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            border: 2px solid var(--accent-color);
+            position: relative;
+            overflow: hidden;
+            transform: rotate(0deg);
+        }
+        
+        .student-card::before {
+            content: "";
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            width: 40px;
+            height: 40px;
+            background-color: var(--primary-color);
+            border-radius: 50%;
+            opacity: 0.2;
+        }
+        
+        .student-card::after {
+            content: "";
+            position: absolute;
+            bottom: -15px;
+            left: -15px;
+            width: 50px;
+            height: 50px;
+            background-color: var(--dark-color);
+            border-radius: 50%;
+            opacity: 0.2;
+        }
+        
+        .student-card:hover {
+            transform: rotate(3deg) scale(1.05);
+            box-shadow: 0 10px 20px rgba(255, 154, 162, 0.2);
+            border-color: var(--primary-color);
+        }
+        
+        .student-card h3 {
+            color: var(--primary-color);
+            margin-bottom: 5px;
+            font-size: 1.4rem;
+        }
+        
+        .student-card p {
+            color: var(--text-color);
+            font-size: 0.9rem;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(3px);
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            position: relative;
+            border: 3px solid var(--primary-color);
+            animation: modalAppear 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        
+        .modal-content::before {
+            content: "✏️";
+            position: absolute;
+            top: -20px;
+            left: -20px;
+            font-size: 2rem;
+            transform: rotate(-20deg);
+        }
+        
+        .close-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            font-size: 1.5rem;
+            color: var(--primary-color);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .close-btn:hover {
+            transform: rotate(90deg) scale(1.2);
+            color: var(--secondary-color);
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--primary-color);
+            font-size: 1.1rem;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid var(--accent-color);
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(255, 154, 162, 0.3);
+        }
+        
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background-color: var(--primary-color);
+            opacity: 0;
+            z-index: 10;
+        }
+        
+        @keyframes bounce {
+            0% { transform: translateY(0) scale(1); }
+            100% { transform: translateY(-10px) scale(1.05); }
+        }
+        
+        @keyframes modalAppear {
+            0% { transform: scale(0.5) rotate(-10deg); opacity: 0; }
+            100% { transform: scale(1) rotate(0); opacity: 1; }
+        }
+        
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .result {
+                font-size: 3rem;
+            }
+            
+            .student-list {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            }
+            
+            .btn {
+                padding: 10px 20px;
+                font-size: 1.1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>✨ 可爱风随机点名 ✨</h1>
+    
+    <div class="container">
+        <div class="display-area">
+            <div class="result" id="result">点击开始</div>
+        </div>
+        
+        <div class="student-details" id="studentDetails" style="display: none;">
+            <h3 id="detailName">学生姓名</h3>
+            <p>学号: <span id="detailId">未填写</span></p>
+            <p>班级: <span id="detailClass">未填写</span></p>
+        </div>
+        
+        <div class="controls">
+            <button class="btn btn-primary" id="startBtn">🎲 开始点名</button>
+            <button class="btn btn-secondary" id="addBtn">➕ 添加学生</button>
+            <button class="btn btn-secondary" id="importBtn">📋 导入名单</button>
+        </div>
+        
+        <div class="student-list" id="studentList">
+            <!-- 学生卡片将在这里动态生成 -->
+        </div>
+    </div>
+    
+    <!-- 添加学生模态框 -->
+    <div class="modal" id="addModal">
+        <div class="modal-content">
+            <span class="close-btn">&times;</span>
+            <h2 style="color: var(--primary-color); margin-bottom: 20px;">添加新学生</h2>
+            <div class="form-group">
+                <label for="studentName">姓名</label>
+                <input type="text" id="studentName" placeholder="输入学生姓名">
+            </div>
+            <div class="form-group">
+                <label for="studentId">学号</label>
+                <input type="text" id="studentId" placeholder="输入学号">
+            </div>
+            <div class="form-group">
+                <label for="studentClass">班级</label>
+                <input type="text" id="studentClass" placeholder="输入班级">
+            </div>
+            <button class="btn btn-primary" id="saveStudentBtn" style="margin-top: 10px;">💾 保存</button>
+        </div>
+    </div>
+    
+    <!-- 导入名单模态框 -->
+    <div class="modal" id="importModal">
+        <div class="modal-content">
+            <span class="close-btn">&times;</span>
+            <h2 style="color: var(--primary-color); margin-bottom: 20px;">导入学生名单</h2>
+            <div class="form-group">
+                <label for="excelFile">选择Excel文件</label>
+                <input type="file" id="excelFile" accept=".xlsx, .xls">
+            </div>
+            <p style="color: var(--text-color); margin-bottom: 20px; font-size: 0.9rem;">
+                🎯 请确保Excel文件包含"姓名"、"学号"和"班级"列
+            </p>
+            <button class="btn btn-primary" id="confirmImportBtn">📤 导入</button>
+        </div>
+    </div>
+    
+    <script>
+        // 学生数据
+        let students = JSON.parse(localStorage.getItem('students')) || [
+            { name: "张小萌", id: "2023001", class: "向日葵班" },
+            { name: "李小甜", id: "2023002", class: "向日葵班" },
+            { name: "王小星", id: "2023003", class: "彩虹班" },
+            { name: "赵小阳", id: "2023004", class: "彩虹班" },
+            { name: "钱小月", id: "2023005", class: "星星班" },
+            { name: "孙小光", id: "2023006", class: "星星班" },
+            { name: "周小花", id: "2023007", class: "月亮班" },
+            { name: "吴小草", id: "2023008", class: "月亮班" }
+        ];
+        
+        // 点名状态
+        let isRolling = false;
+        let rollInterval;
+        let currentStudentIndex = -1;
+        
+        // DOM元素
+        const result = document.getElementById('result');
+        const studentDetails = document.getElementById('studentDetails');
+        const detailName = document.getElementById('detailName');
+        const detailId = document.getElementById('detailId');
+        const detailClass = document.getElementById('detailClass');
+        const startBtn = document.getElementById('startBtn');
+        const addBtn = document.getElementById('addBtn');
+        const importBtn = document.getElementById('importBtn');
+        const studentList = document.getElementById('studentList');
+        const addModal = document.getElementById('addModal');
+        const importModal = document.getElementById('importModal');
+        const closeBtns = document.querySelectorAll('.close-btn');
+        const studentNameInput = document.getElementById('studentName');
+        const studentIdInput = document.getElementById('studentId');
+        const studentClassInput = document.getElementById('studentClass');
+        const saveStudentBtn = document.getElementById('saveStudentBtn');
+        const excelFileInput = document.getElementById('excelFile');
+        const confirmImportBtn = document.getElementById('confirmImportBtn');
+        
+        // 初始化
+        function init() {
+            renderStudentList();
+            
+            // 绑定事件
+            startBtn.addEventListener('click', toggleRolling);
+            addBtn.addEventListener('click', () => addModal.style.display = 'flex');
+            importBtn.addEventListener('click', () => importModal.style.display = 'flex');
+            
+            closeBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    addModal.style.display = 'none';
+                    importModal.style.display = 'none';
+                });
+            });
+            
+            window.addEventListener('click', (e) => {
+                if (e.target.classList.contains('modal')) {
+                    addModal.style.display = 'none';
+                    importModal.style.display = 'none';
+                }
+            });
+            
+            saveStudentBtn.addEventListener('click', addStudent);
+            confirmImportBtn.addEventListener('click', importExcel);
+        }
+        
+        // 渲染学生列表
+        function renderStudentList() {
+            studentList.innerHTML = '';
+            
+            if (students.length === 0) {
+                studentList.innerHTML = `
+                    <div style="grid-column:1/-1;text-align:center;color:var(--text-color);padding:20px;">
+                        <p style="font-size:1.2rem;margin-bottom:10px;">🎈 还没有学生哦~</p>
+                        <p>点击"添加学生"按钮添加第一个学生吧！</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            students.forEach((student, index) => {
+                const card = document.createElement('div');
+                card.className = 'student-card';
+                card.innerHTML = `
+                    <h3>${student.name}</h3>
+                    <p>学号: ${student.id || '未填写'}</p>
+                    <p>班级: ${student.class || '未填写'}</p>
+                `;
+                
+                card.addEventListener('click', () => {
+                    showStudentDetails(student);
+                    createConfetti(card);
+                });
+                
+                studentList.appendChild(card);
+            });
+        }
+        
+        // 开始/停止点名
+        function toggleRolling() {
+            if (students.length === 0) {
+                alert('请先添加学生数据！');
+                return;
+            }
+            
+            if (isRolling) {
+                stopRolling();
+            } else {
+                startRolling();
+            }
+        }
+        
+        // 开始点名
+        function startRolling() {
+            isRolling = true;
+            startBtn.textContent = '🛑 停止点名';
+            studentDetails.style.display = 'none';
+            
+            // 添加弹跳动画
+            result.style.animation = 'bounce 0.3s infinite alternate';
+            
+            // 随机显示名字
+            rollInterval = setInterval(() => {
+                currentStudentIndex = Math.floor(Math.random() * students.length);
+                result.textContent = students[currentStudentIndex].name;
+            }, 100);
+        }
+        
+        // 停止点名
+        function stopRolling() {
+            clearInterval(rollInterval);
+            isRolling = false;
+            startBtn.textContent = '🎲 开始点名';
+            result.style.animation = '';
+            
+            if (currentStudentIndex >= 0) {
+                showStudentDetails(students[currentStudentIndex]);
+                createConfetti(result);
+            }
+        }
+        
+        // 显示学生详情
+        function showStudentDetails(student) {
+            detailName.textContent = student.name;
+            detailId.textContent = student.id || '未填写';
+            detailClass.textContent = student.class || '未填写';
+            studentDetails.style.display = 'block';
+        }
+        
+        // 添加学生
+        function addStudent() {
+            const name = studentNameInput.value.trim();
+            const id = studentIdInput.value.trim();
+            const cls = studentClassInput.value.trim();
+            
+            if (!name) {
+                alert('请输入学生姓名！');
+                return;
+            }
+            
+            students.push({ name, id, class: cls });
+            localStorage.setItem('students', JSON.stringify(students));
+            
+            // 清空输入
+            studentNameInput.value = '';
+            studentIdInput.value = '';
+            studentClassInput.value = '';
+            
+            // 更新UI
+            renderStudentList();
+            addModal.style.display = 'none';
+            
+            // 显示成功动画
+            createConfetti(saveStudentBtn);
+        }
+        
+        // 导入Excel (使用SheetJS库)
+        function importExcel() {
+            const file = excelFileInput.files[0];
+            if (!file) {
+                alert('请先选择Excel文件！');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    
+                    // 获取第一个工作表
+                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const jsonData = XLSX.utils.sheet_to_json(firstSheet);
+                    
+                    if (jsonData.length === 0) {
+                        alert('Excel文件中没有数据！');
+                        return;
+                    }
+                    
+                    // 转换数据格式
+                    const newStudents = jsonData.map(row => {
+                        return {
+                            name: row['姓名'] || row['name'] || '',
+                            id: row['学号'] || row['id'] || '',
+                            class: row['班级'] || row['class'] || ''
+                        };
+                    }).filter(s => s.name);  // 过滤掉没有姓名的行
+                    
+                    // 合并现有数据
+                    students = [...students, ...newStudents];
+                    localStorage.setItem('students', JSON.stringify(students));
+                    
+                    // 更新UI
+                    renderStudentList();
+                    importModal.style.display = 'none';
+                    excelFileInput.value = '';
+                    
+                    // 显示成功动画
+                    createConfetti(confirmImportBtn);
+                    
+                    alert(`成功导入 ${newStudents.length} 条学生数据！`);
+                } catch (error) {
+                    console.error(error);
+                    alert('导入失败，请检查Excel文件格式！');
+                }
+            };
+            
+            reader.readAsArrayBuffer(file);
+        }
+        
+        // 创建彩色纸屑效果
+        function createConfetti(element) {
+            const rect = element.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+            
+            const colors = ['#FF9AA2', '#FFB7B2', '#FFDAC1', '#E2F0CB', '#B5EAD7'];
+            
+            for (let i = 0; i < 30; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                confetti.style.left = `${centerX}px`;
+                confetti.style.top = `${centerY}px`;
+                confetti.style.transform = `rotate(${Math.random() * 360}deg)`;
+                confetti.style.width = `${Math.random() * 10 + 5}px`;
+                confetti.style.height = `${Math.random() * 10 + 5}px`;
+                confetti.style.borderRadius = Math.random() > 0.5 ? '50%' : '0';
+                
+                document.body.appendChild(confetti);
+                
+                const angle = Math.random() * Math.PI * 2;
+                const velocity = 5 + Math.random() * 5;
+                const x = Math.cos(angle) * velocity;
+                const y = Math.sin(angle) * velocity;
+                
+                let posX = centerX;
+                let posY = centerY;
+                let opacity = 1;
+                let scale = 1;
+                
+                const animate = () => {
+                    posX += x;
+                    posY += y + 0.5; // 添加重力效果
+                    opacity -= 0.02;
+                    scale -= 0.01;
+                    
+                    confetti.style.left = `${posX}px`;
+                    confetti.style.top = `${posY}px`;
+                    confetti.style.opacity = opacity;
+                    confetti.style.transform = `rotate(${i * 5}deg) scale(${scale})`;
+                    
+                    if (opacity > 0) {
+                        requestAnimationFrame(animate);
+                    } else {
+                        confetti.remove();
+                    }
+                };
+                
+                setTimeout(() => {
+                    requestAnimationFrame(animate);
+                }, i * 20);
+            }
+        }
+        
+        // 动态加载SheetJS库
+        function loadSheetJS() {
+            return new Promise((resolve, reject) => {
+                if (typeof XLSX !== 'undefined') {
+                    resolve();
+                    return;
+                }
+                
+                const script = document.createElement('script');
+                script.src = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
+                script.onload = resolve;
+                script.onerror = reject;
+                document.head.appendChild(script);
+            });
+        }
+        
+        // 初始化应用
+        document.addEventListener('DOMContentLoaded', () => {
+            loadSheetJS().then(init).catch(err => {
+                console.error('加载SheetJS失败:', err);
+                // 即使没有SheetJS也能使用基本功能
+                init();
+                importBtn.style.display = 'none';
+            });
+        });
+    </script>
+</body>
+</html>

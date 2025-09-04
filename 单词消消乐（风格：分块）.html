@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>单词趣味消消乐</title>
+    <style>
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            background-color: #f9f0ff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        
+        .game-container {
+            background-color: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            width: 90%;
+            max-width: 900px;
+            text-align: center;
+        }
+        
+        h1 {
+            color: #9c64ff;
+            margin-top: 0;
+            font-size: 2.5rem;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .difficulty-selector {
+            margin: 20px 0;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+        
+        .difficulty-btn {
+            background-color: #e2c6ff;
+            border: none;
+            border-radius: 50px;
+            padding: 10px 20px;
+            font-family: 'Microsoft YaHei', sans-serif;
+            font-size: 1.2rem;
+            color: #6a3093;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .difficulty-btn:hover {
+            background-color: #d0a3ff;
+            transform: translateY(-2px);
+        }
+        
+        .difficulty-btn.active {
+            background-color: #9c64ff;
+            color: white;
+        }
+        
+        .timer {
+            font-size: 1.8rem;
+            color: #6a3093;
+            margin: 15px 0;
+            font-weight: bold;
+        }
+        
+        .game-board {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .word-column {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .card {
+            background-color: #f3e5ff;
+            border-radius: 12px;
+            padding: 15px;
+            font-size: 1.8rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            user-select: none;
+            animation: fadeIn 0.5s;
+        }
+        
+        .card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        .card.selected {
+            background-color: #d0a3ff;
+            transform: scale(1.05);
+        }
+        
+        .card.matched {
+            animation: matchAnimation 0.5s forwards;
+        }
+        
+        .card.wrong {
+            animation: shake 0.5s;
+        }
+        
+        .restart-btn {
+            background-color: #9c64ff;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            padding: 12px 25px;
+            font-family: 'Microsoft YaHei', sans-serif;
+            font-size: 1.2rem;
+            margin-top: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .restart-btn:hover {
+            background-color: #8a50e6;
+            transform: translateY(-2px);
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.8); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        
+        @keyframes matchAnimation {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+            100% { transform: scale(0); opacity: 0; }
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+            20%, 40%, 60%, 80% { transform: translateX(5px); }
+        }
+        
+        .game-over {
+            font-size: 2rem;
+            color: #9c64ff;
+            margin: 20px 0;
+            font-weight: bold;
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        @media (max-width: 768px) {
+            .game-board {
+                grid-template-columns: 1fr;
+            }
+            
+            .card {
+                font-size: 1.5rem;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1>单词趣味消消乐</h1>
+        
+        <div class="difficulty-selector">
+            <button class="difficulty-btn active" data-difficulty="easy">容易 (5词)</button>
+            <button class="difficulty-btn" data-difficulty="medium">普通 (10词)</button>
+            <button class="difficulty-btn" data-difficulty="hard">困难 (15词)</button>
+        </div>
+        
+        <div class="timer">时间: 0秒</div>
+        
+        <div class="game-board">
+            <div class="word-column" id="english-column"></div>
+            <div class="word-column" id="chinese-column"></div>
+        </div>
+        
+        <div class="game-over" style="display: none;"></div>
+        
+        <button class="restart-btn">重新开始</button>
+    </div>
+
+    <script>
+        // 单词库
+        const wordPairs = [
+            { english: "apple", chinese: "苹果" },
+            { english: "banana", chinese: "香蕉" },
+            { english: "orange", chinese: "橙子" },
+            { english: "grape", chinese: "葡萄" },
+            { english: "watermelon", chinese: "西瓜" },
+            { english: "pear", chinese: "梨" },
+            { english: "peach", chinese: "桃子" },
+            { english: "strawberry", chinese: "草莓" },
+            { english: "pineapple", chinese: "菠萝" },
+            { english: "mango", chinese: "芒果" },
+            { english: "lemon", chinese: "柠檬" },
+            { english: "cherry", chinese: "樱桃" },
+            { english: "blueberry", chinese: "蓝莓" },
+            { english: "kiwi", chinese: "猕猴桃" },
+            { english: "coconut", chinese: "椰子" },
+            { english: "dog", chinese: "狗" },
+            { english: "cat", chinese: "猫" },
+            { english: "bird", chinese: "鸟" },
+            { english: "fish", chinese: "鱼" },
+            { english: "rabbit", chinese: "兔子" },
+            { english: "book", chinese: "书" },
+            { english: "pen", chinese: "钢笔" },
+            { english: "desk", chinese: "桌子" },
+            { english: "chair", chinese: "椅子" },
+            { english: "window", chinese: "窗户" }
+        ];
+        
+        // 游戏状态
+        let gameState = {
+            difficulty: "easy",
+            selectedCard: null,
+            matchedPairs: 0,
+            totalPairs: 5,
+            startTime: null,
+            timerInterval: null,
+            elapsedTime: 0,
+            isGameOver: false
+        };
+        
+        // DOM元素
+        const englishColumn = document.getElementById("english-column");
+        const chineseColumn = document.getElementById("chinese-column");
+        const timerDisplay = document.querySelector(".timer");
+        const gameOverDisplay = document.querySelector(".game-over");
+        const difficultyButtons = document.querySelectorAll(".difficulty-btn");
+        const restartButton = document.querySelector(".restart-btn");
+        
+        // 初始化游戏
+        function initGame() {
+            // 重置游戏状态
+            gameState.selectedCard = null;
+            gameState.matchedPairs = 0;
+            gameState.startTime = null;
+            gameState.elapsedTime = 0;
+            gameState.isGameOver = false;
+            
+            // 清除计时器
+            if (gameState.timerInterval) {
+                clearInterval(gameState.timerInterval);
+            }
+            
+            // 更新计时器显示
+            timerDisplay.textContent = "时间: 0秒";
+            gameOverDisplay.style.display = "none";
+            
+            // 根据难度设置总对数
+            switch (gameState.difficulty) {
+                case "easy":
+                    gameState.totalPairs = 5;
+                    break;
+                case "medium":
+                    gameState.totalPairs = 10;
+                    break;
+                case "hard":
+                    gameState.totalPairs = 15;
+                    break;
+            }
+            
+            // 清空游戏板
+            englishColumn.innerHTML = "";
+            chineseColumn.innerHTML = "";
+            
+            // 获取随机单词对
+            const shuffledPairs = [...wordPairs].sort(() => 0.5 - Math.random()).slice(0, gameState.totalPairs);
+            
+            // 创建英文卡片
+            const englishWords = shuffledPairs.map(pair => pair.english);
+            englishWords.sort(() => 0.5 - Math.random()).forEach(word => {
+                const card = createCard(word, "english");
+                englishColumn.appendChild(card);
+            });
+            
+            // 创建中文卡片
+            const chineseWords = shuffledPairs.map(pair => pair.chinese);
+            chineseWords.sort(() => 0.5 - Math.random()).forEach(word => {
+                const card = createCard(word, "chinese");
+                chineseColumn.appendChild(card);
+            });
+            
+            // 存储正确的配对关系
+            shuffledPairs.forEach(pair => {
+                const englishCard = Array.from(englishColumn.children).find(card => card.textContent === pair.english);
+                const chineseCard = Array.from(chineseColumn.children).find(card => card.textContent === pair.chinese);
+                
+                if (englishCard && chineseCard) {
+                    englishCard.dataset.matchId = chineseCard.dataset.id;
+                    chineseCard.dataset.matchId = englishCard.dataset.id;
+                }
+            });
+        }
+        
+        // 创建卡片元素
+        function createCard(text, type) {
+            const card = document.createElement("div");
+            card.className = "card";
+            card.textContent = text;
+            card.dataset.id = Math.random().toString(36).substr(2, 9);
+            card.dataset.type = type;
+            
+            // 添加点击事件
+            card.addEventListener("click", () => handleCardClick(card));
+            
+            return card;
+        }
+        
+        // 处理卡片点击
+        function handleCardClick(card) {
+            // 如果游戏结束或卡片已匹配，则忽略点击
+            if (gameState.isGameOver || card.classList.contains("matched")) {
+                return;
+            }
+            
+            // 防误触逻辑 - 不能连续点击同一张卡片
+            if (gameState.selectedCard === card) {
+                return;
+            }
+            
+            // 开始计时（第一次点击时）
+            if (gameState.startTime === null) {
+                gameState.startTime = Date.now();
+                gameState.timerInterval = setInterval(updateTimer, 1000);
+            }
+            
+            // 如果没有选中的卡片，选中当前卡片
+            if (gameState.selectedCard === null) {
+                gameState.selectedCard = card;
+                card.classList.add("selected");
+                return;
+            }
+            
+            // 如果已经选中了一张卡片，检查是否匹配
+            const firstCard = gameState.selectedCard;
+            const secondCard = card;
+            
+            // 检查是否匹配（英文对应中文）
+            if ((firstCard.dataset.type === "english" && secondCard.dataset.type === "chinese" && firstCard.dataset.matchId === secondCard.dataset.id) ||
+                (firstCard.dataset.type === "chinese" && secondCard.dataset.type === "english" && firstCard.dataset.matchId === secondCard.dataset.id)) {
+                
+                // 匹配成功
+                firstCard.classList.remove("selected");
+                firstCard.classList.add("matched");
+                secondCard.classList.add("matched");
+                
+                gameState.matchedPairs++;
+                
+                // 检查游戏是否结束
+                if (gameState.matchedPairs === gameState.totalPairs) {
+                    endGame();
+                }
+            } else {
+                // 匹配失败
+                firstCard.classList.remove("selected");
+                firstCard.classList.add("wrong");
+                secondCard.classList.add("wrong");
+                
+                // 抖动效果后移除wrong类
+                setTimeout(() => {
+                    firstCard.classList.remove("wrong");
+                    secondCard.classList.remove("wrong");
+                }, 500);
+            }
+            
+            // 重置选中的卡片
+            gameState.selectedCard = null;
+        }
+        
+        // 更新计时器
+        function updateTimer() {
+            gameState.elapsedTime = Math.floor((Date.now() - gameState.startTime) / 1000);
+            timerDisplay.textContent = `时间: ${gameState.elapsedTime}秒`;
+        }
+        
+        // 结束游戏
+        function endGame() {
+            gameState.isGameOver = true;
+            clearInterval(gameState.timerInterval);
+            
+            gameOverDisplay.textContent = `恭喜完成! 用时: ${gameState.elapsedTime}秒`;
+            gameOverDisplay.style.display = "block";
+            
+            // 5秒后自动重新开始
+            setTimeout(initGame, 5000);
+        }
+        
+        // 难度选择
+        difficultyButtons.forEach(button => {
+            button.addEventListener("click", () => {
+                difficultyButtons.forEach(btn => btn.classList.remove("active"));
+                button.classList.add("active");
+                gameState.difficulty = button.dataset.difficulty;
+                initGame();
+            });
+        });
+        
+        // 重新开始按钮
+        restartButton.addEventListener("click", initGame);
+        
+        // 初始化游戏
+        initGame();
+    </script>
+</body>
+</html>

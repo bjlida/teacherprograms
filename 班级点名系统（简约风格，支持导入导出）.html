@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小课堂随机点名</title>
+    <style>
+        :root {
+            --primary-color: #1e88e5;
+            --secondary-color: #ffeb3b;
+            --neutral-color: #f5f5f5;
+            --text-dark: #0d47a1;
+            --text-light: #ffffff;
+            --shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }
+        
+        body {
+            background-color: #f9f9f9;
+            color: #333;
+            line-height: 1.6;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: 20px;
+        }
+        
+        h1 {
+            grid-column: 1 / -1;
+            text-align: center;
+            color: var(--primary-color);
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--primary-color);
+        }
+        
+        .display-area {
+            background-color: white;
+            border: 3px solid var(--primary-color);
+            border-radius: 10px;
+            padding: 30px;
+            text-align: center;
+            min-height: 300px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            box-shadow: var(--shadow);
+        }
+        
+        .result {
+            font-size: 3rem;
+            color: var(--text-dark);
+            margin: 20px 0;
+            min-height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .student-details {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: var(--neutral-color);
+            border-radius: 8px;
+            width: 100%;
+            text-align: left;
+        }
+        
+        .btn {
+            background-color: var(--secondary-color);
+            color: #333;
+            border: none;
+            padding: 12px 25px;
+            font-size: 1.2rem;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: bold;
+            box-shadow: var(--shadow);
+            margin: 10px 5px;
+        }
+        
+        .btn:hover {
+            background-color: #fdd835;
+            transform: translateY(-2px);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: var(--text-light);
+        }
+        
+        .btn-primary:hover {
+            background-color: #1976d2;
+        }
+        
+        .student-list {
+            background-color: white;
+            border-radius: 10px;
+            padding: 15px;
+            height: 600px;
+            overflow-y: auto;
+            box-shadow: var(--shadow);
+        }
+        
+        .student-card {
+            background-color: var(--neutral-color);
+            padding: 12px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: var(--shadow);
+        }
+        
+        .student-card:hover {
+            transform: translateX(5px);
+            background-color: #e0e0e0;
+        }
+        
+        .student-card.selected {
+            border-left: 5px solid var(--primary-color);
+        }
+        
+        .student-card h3 {
+            color: var(--primary-color);
+            margin-bottom: 5px;
+        }
+        
+        .controls {
+            margin-top: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .settings-panel {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: var(--neutral-color);
+            border-radius: 8px;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .close {
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+        
+        .tab-container {
+            margin-top: 20px;
+        }
+        
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .tab {
+            padding: 10px 15px;
+            cursor: pointer;
+            background-color: #f1f1f1;
+            margin-right: 5px;
+            border-radius: 5px 5px 0 0;
+        }
+        
+        .tab.active {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .tab-content {
+            display: none;
+            padding: 15px;
+            background-color: white;
+            border-radius: 0 0 5px 5px;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .history-item {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+            
+            .student-list {
+                height: auto;
+                max-height: 300px;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .result {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>小课堂随机点名</h1>
+        
+        <div class="display-area">
+            <div class="result" id="result">准备开始点名</div>
+            <div class="student-details" id="studentDetails" style="display: none;"></div>
+            
+            <div class="controls">
+                <button class="btn btn-primary" id="startBtn">开始点名</button>
+                <button class="btn" id="settingsBtn">设置</button>
+                <button class="btn" id="manageBtn">管理学生</button>
+                <button class="btn" id="historyBtn">点名历史</button>
+            </div>
+            
+            <div class="settings-panel" id="settingsPanel" style="display: none;">
+                <div class="form-group">
+                    <label for="mode">点名模式:</label>
+                    <select id="mode">
+                        <option value="random">随机点名</option>
+                        <option value="sequential">顺序点名</option>
+                        <option value="weighted">加权随机</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="duration">点名持续时间 (秒):</label>
+                    <input type="number" id="duration" value="3" min="1" max="10">
+                </div>
+                <div class="form-group">
+                    <label for="maxTimes">每人最多被点次数:</label>
+                    <input type="number" id="maxTimes" value="2" min="1" max="10">
+                </div>
+                <button class="btn btn-primary" id="saveSettings">保存设置</button>
+            </div>
+        </div>
+        
+        <div class="student-list" id="studentList">
+            <p>暂无学生数据，请点击"管理学生"添加</p>
+        </div>
+    </div>
+    
+    <!-- 管理学生模态框 -->
+    <div class="modal" id="manageModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>管理学生</h2>
+                <span class="close">&times;</span>
+            </div>
+            <div class="tab-container">
+                <div class="tabs">
+                    <div class="tab active" data-tab="add">添加学生</div>
+                    <div class="tab" data-tab="import">导入Excel</div>
+                    <div class="tab" data-tab="export">导出数据</div>
+                </div>
+                
+                <div class="tab-content active" id="add">
+                    <div class="form-group">
+                        <label for="studentName">姓名:</label>
+                        <input type="text" id="studentName" placeholder="输入学生姓名">
+                    </div>
+                    <div class="form-group">
+                        <label for="studentId">学号:</label>
+                        <input type="text" id="studentId" placeholder="输入学号">
+                    </div>
+                    <div class="form-group">
+                        <label for="studentClass">班级:</label>
+                        <input type="text" id="studentClass" placeholder="输入班级">
+                    </div>
+                    <button class="btn btn-primary" id="addStudentBtn">添加学生</button>
+                </div>
+                
+                <div class="tab-content" id="import">
+                    <div class="form-group">
+                        <label for="excelFile">选择Excel文件:</label>
+                        <input type="file" id="excelFile" accept=".xlsx, .xls">
+                    </div>
+                    <div class="form-group">
+                        <label>Excel格式要求:</label>
+                        <p>第一行应为标题行，包含: 姓名, 学号, 班级 等列</p>
+                    </div>
+                    <button class="btn btn-primary" id="importBtn">导入数据</button>
+                </div>
+                
+                <div class="tab-content" id="export">
+                    <div class="form-group">
+                        <label>导出选项:</label>
+                        <p>将当前学生列表导出为Excel文件</p>
+                    </div>
+                    <button class="btn btn-primary" id="exportBtn">导出Excel</button>
+                    <button class="btn btn-primary" id="exportHistoryBtn">导出点名历史</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 点名历史模态框 -->
+    <div class="modal" id="historyModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>点名历史记录</h2>
+                <span class="close">&times;</span>
+            </div>
+            <div id="historyList">
+                <!-- 历史记录将在这里动态生成 -->
+            </div>
+            <button class="btn" id="clearHistoryBtn" style="margin-top: 15px;">清空历史记录</button>
+        </div>
+    </div>
+    
+    <script>
+        // 学生数据和状态管理
+        const state = {
+            students: JSON.parse(localStorage.getItem('students')) || [],
+            settings: JSON.parse(localStorage.getItem('settings')) || {
+                mode: 'random',
+                duration: 3,
+                maxTimes: 2
+            },
+            history: JSON.parse(localStorage.getItem('history')) || [],
+            isRolling: false,
+            rollInterval: null,
+            currentIndex: -1
+        };
+        
+        // DOM元素
+        const elements = {
+            result: document.getElementById('result'),
+            studentDetails: document.getElementById('studentDetails'),
+            startBtn: document.getElementById('startBtn'),
+            settingsBtn: document.getElementById('settingsBtn'),
+            manageBtn: document.getElementById('manageBtn'),
+            historyBtn: document.getElementById('historyBtn'),
+            settingsPanel: document.getElementById('settingsPanel'),
+            studentList: document.getElementById('studentList'),
+            manageModal: document.getElementById('manageModal'),
+            historyModal: document.getElementById('historyModal'),
+            closeButtons: document.querySelectorAll('.close'),
+            tabs: document.querySelectorAll('.tab'),
+            tabContents: document.querySelectorAll('.tab-content'),
+            mode: document.getElementById('mode'),
+            duration: document.getElementById('duration'),
+            maxTimes: document.getElementById('maxTimes'),
+            saveSettings: document.getElementById('saveSettings'),
+            studentName: document.getElementById('studentName'),
+            studentId: document.getElementById('studentId'),
+            studentClass: document.getElementById('studentClass'),
+            addStudentBtn: document.getElementById('addStudentBtn'),
+            excelFile: document.getElementById('excelFile'),
+            importBtn: document.getElementById('importBtn'),
+            exportBtn: document.getElementById('exportBtn'),
+            exportHistoryBtn: document.getElementById('exportHistoryBtn'),
+            historyList: document.getElementById('historyList'),
+            clearHistoryBtn: document.getElementById('clearHistoryBtn')
+        };
+        
+        // 初始化
+        function init() {
+            // 加载设置
+            elements.mode.value = state.settings.mode;
+            elements.duration.value = state.settings.duration;
+            elements.maxTimes.value = state.settings.maxTimes;
+            
+            // 渲染学生列表
+            renderStudentList();
+            
+            // 绑定事件
+            bindEvents();
+        }
+        
+        // 绑定事件
+        function bindEvents() {
+            // 开始/停止点名
+            elements.startBtn.addEventListener('click', toggleRolling);
+            
+            // 显示/隐藏设置面板
+            elements.settingsBtn.addEventListener('click', () => {
+                elements.settingsPanel.style.display = 
+                    elements.settingsPanel.style.display === 'none' ? 'block' : 'none';
+            });
+            
+            // 打开管理学生模态框
+            elements.manageBtn.addEventListener('click', () => {
+                elements.manageModal.style.display = 'flex';
+            });
+            
+            // 打开历史记录模态框
+            elements.historyBtn.addEventListener('click', () => {
+                renderHistoryList();
+                elements.historyModal.style.display = 'flex';
+            });
+            
+            // 关闭模态框
+            elements.closeButtons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    btn.closest('.modal').style.display = 'none';
+                });
+            });
+            
+            // 点击模态框外部关闭
+            window.addEventListener('click', (e) => {
+                if (e.target.classList.contains('modal')) {
+                    e.target.style.display = 'none';
+                }
+            });
+            
+            // 标签页切换
+            elements.tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const tabId = tab.getAttribute('data-tab');
+                    
+                    // 更新标签样式
+                    elements.tabs.forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    
+                    // 更新内容显示
+                    elements.tabContents.forEach(content => {
+                        content.classList.remove('active');
+                        if (content.id === tabId) {
+                            content.classList.add('active');
+                        }
+                    });
+                });
+            });
+            
+            // 保存设置
+            elements.saveSettings.addEventListener('click', saveSettings);
+            
+            // 添加学生
+            elements.addStudentBtn.addEventListener('click', addStudent);
+            
+            // 导入Excel
+            elements.importBtn.addEventListener('click', importExcel);
+            
+            // 导出Excel
+            elements.exportBtn.addEventListener('click', exportStudents);
+            elements.exportHistoryBtn.addEventListener('click', exportHistory);
+            
+            // 清空历史记录
+            elements.clearHistoryBtn.addEventListener('click', clearHistory);
+        }
+        
+        // 开始/停止点名
+        function toggleRolling() {
+            if (state.students.length === 0) {
+                alert('请先添加学生数据！');
+                return;
+            }
+            
+            if (state.isRolling) {
+                stopRolling();
+            } else {
+                startRolling();
+            }
+        }
+        
+        // 开始点名
+        function startRolling() {
+            state.isRolling = true;
+            elements.startBtn.textContent = '停止点名';
+            
+            const duration = state.settings.duration * 1000;
+            const startTime = Date.now();
+            
+            state.rollInterval = setInterval(() => {
+                const elapsed = Date.now() - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                
+                // 根据进度调整滚动速度
+                const speed = 100 - (progress * 90); // 从100ms到10ms递减
+                
+                clearInterval(state.rollInterval);
+                
+                state.rollInterval = setInterval(() => {
+                    rollStudent();
+                }, speed);
+                
+                if (progress >= 1) {
+                    clearInterval(state.rollInterval);
+                    stopRolling();
+                }
+            }, 50);
+        }
+        
+        // 滚动显示学生
+        function rollStudent() {
+            let index;
+            
+            switch (state.settings.mode) {
+                case 'sequential':
+                    // 顺序模式
+                    state.currentIndex = (state.currentIndex + 1) % state.students.length;
+                    index = state.currentIndex;
+                    break;
+                    
+                case 'weighted':
+                    // 加权随机模式（被点次数少的权重高）
+                    const weights = state.students.map(student => {
+                        const times = state.history.filter(h => h.id === student.id).length;
+                        return Math.max(1, state.settings.maxTimes - times);
+                    });
+                    
+                    const totalWeight = weights.reduce((sum, w) => sum + w, 0);
+                    let random = Math.random() * totalWeight;
+                    
+                    for (let i = 0; i < state.students.length; i++) {
+                        if (random < weights[i]) {
+                            index = i;
+                            break;
+                        }
+                        random -= weights[i];
+                    }
+                    
+                    index = index || Math.floor(Math.random() * state.students.length);
+                    break;
+                    
+                default:
+                    // 随机模式
+                    index = Math.floor(Math.random() * state.students.length);
+            }
+            
+            const student = state.students[index];
+            elements.result.textContent = student.name;
+            state.currentIndex = index;
+        }
+        
+        // 停止点名
+        function stopRolling() {
+            clearInterval(state.rollInterval);
+            state.isRolling = false;
+            elements.startBtn.textContent = '开始点名';
+            
+            if (state.currentIndex >= 0) {
+                const student = state.students[state.currentIndex];
+                showStudentDetails(student);
+                recordHistory(student);
+            }
+        }
+        
+        // 显示学生详情
+        function showStudentDetails(student) {
+            elements.studentDetails.style.display = 'block';
+            elements.studentDetails.innerHTML = `
+                <h3>${student.name}</h3>
+                <p><strong>学号:</strong> ${student.id || '未填写'}</p>
+                <p><strong>班级:</strong> ${student.class || '未填写'}</p>
+                <p><strong>被点次数:</strong> ${state.history.filter(h => h.id === student.id).length}</p>
+            `;
+        }
+        
+        // 记录点名历史
+        function recordHistory(student) {
+            const record = {
+                id: student.id || student.name,
+                name: student.name,
+                time: new Date().toLocaleString()
+            };
+            
+            state.history.unshift(record);
+            localStorage.setItem('history', JSON.stringify(state.history));
+        }
+        
+        // 保存设置
+        function saveSettings() {
+            state.settings = {
+                mode: elements.mode.value,
+                duration: parseInt(elements.duration.value),
+                maxTimes: parseInt(elements.maxTimes.value)
+            };
+            
+            localStorage.setItem('settings', JSON.stringify(state.settings));
+            alert('设置已保存！');
+            elements.settingsPanel.style.display = 'none';
+        }
+        
+        // 渲染学生列表
+        function renderStudentList() {
+            if (state.students.length === 0) {
+                elements.studentList.innerHTML = '<p>暂无学生数据，请点击"管理学生"添加</p>';
+                return;
+            }
+            
+            elements.studentList.innerHTML = '';
+            
+            state.students.forEach((student, index) => {
+                const card = document.createElement('div');
+                card.className = 'student-card';
+                card.innerHTML = `
+                    <h3>${student.name}</h3>
+                    <p>学号: ${student.id || '未填写'}</p>
+                    <p>班级: ${student.class || '未填写'}</p>
+                `;
+                
+                card.addEventListener('click', () => {
+                    document.querySelectorAll('.student-card').forEach(c => {
+                        c.classList.remove('selected');
+                    });
+                    card.classList.add('selected');
+                    
+                    elements.result.textContent = student.name;
+                    state.currentIndex = index;
+                    showStudentDetails(student);
+                });
+                
+                elements.studentList.appendChild(card);
+            });
+        }
+        
+        // 添加学生
+        function addStudent() {
+            const name = elements.studentName.value.trim();
+            const id = elements.studentId.value.trim();
+            const cls = elements.studentClass.value.trim();
+            
+            if (!name) {
+                alert('请输入学生姓名！');
+                return;
+            }
+            
+            const student = { name, id, class: cls };
+            state.students.push(student);
+            localStorage.setItem('students', JSON.stringify(state.students));
+            
+            // 清空输入
+            elements.studentName.value = '';
+            elements.studentId.value = '';
+            elements.studentClass.value = '';
+            
+            renderStudentList();
+            alert('学生添加成功！');
+        }
+        
+        // 导入Excel (使用SheetJS库)
+        function importExcel() {
+            const file = elements.excelFile.files[0];
+            if (!file) {
+                alert('请先选择Excel文件！');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    
+                    // 获取第一个工作表
+                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const jsonData = XLSX.utils.sheet_to_json(firstSheet);
+                    
+                    if (jsonData.length === 0) {
+                        alert('Excel文件中没有数据！');
+                        return;
+                    }
+                    
+                    // 转换数据格式
+                    const newStudents = jsonData.map(row => {
+                        return {
+                            name: row['姓名'] || row['name'] || '',
+                            id: row['学号'] || row['id'] || '',
+                            class: row['班级'] || row['class'] || ''
+                        };
+                    });
+                    
+                    // 合并现有数据
+                    state.students = [...state.students, ...newStudents];
+                    localStorage.setItem('students', JSON.stringify(state.students));
+                    
+                    renderStudentList();
+                    alert(`成功导入 ${newStudents.length} 条学生数据！`);
+                } catch (error) {
+                    console.error(error);
+                    alert('导入失败，请检查Excel文件格式！');
+                }
+            };
+            
+            reader.readAsArrayBuffer(file);
+        }
+        
+        // 导出学生数据为Excel
+        function exportStudents() {
+            if (state.students.length === 0) {
+                alert('没有学生数据可导出！');
+                return;
+            }
+            
+            // 创建工作表
+            const ws = XLSX.utils.json_to_sheet(state.students.map(s => ({
+                '姓名': s.name,
+                '学号': s.id,
+                '班级': s.class
+            })));
+            
+            // 创建工作簿
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, '学生名单');
+            
+            // 导出文件
+            XLSX.writeFile(wb, '学生名单.xlsx');
+        }
+        
+        // 导出点名历史为Excel
+        function exportHistory() {
+            if (state.history.length === 0) {
+                alert('没有点名历史可导出！');
+                return;
+            }
+            
+            // 创建工作表
+            const ws = XLSX.utils.json_to_sheet(state.history.map(h => ({
+                '姓名': h.name,
+                '学号': h.id,
+                '时间': h.time
+            })));
+            
+            // 创建工作簿
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, '点名历史');
+            
+            // 导出文件
+            XLSX.writeFile(wb, '点名历史.xlsx');
+        }
+        
+        // 渲染历史记录列表
+        function renderHistoryList() {
+            if (state.history.length === 0) {
+                elements.historyList.innerHTML = '<p>暂无点名历史记录</p>';
+                return;
+            }
+            
+            elements.historyList.innerHTML = '';
+            
+            state.history.forEach(record => {
+                const item = document.createElement('div');
+                item.className = 'history-item';
+                item.innerHTML = `
+                    <p><strong>${record.name}</strong> (${record.id})</p>
+                    <p>时间: ${record.time}</p>
+                `;
+                elements.historyList.appendChild(item);
+            });
+        }
+        
+        // 清空历史记录
+        function clearHistory() {
+            if (confirm('确定要清空所有点名历史记录吗？')) {
+                state.history = [];
+                localStorage.setItem('history', JSON.stringify(state.history));
+                renderHistoryList();
+            }
+        }
+        
+        // 初始化应用
+        document.addEventListener('DOMContentLoaded', () => {
+            // 动态加载SheetJS库
+            const script = document.createElement('script');
+            script.src = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
+            script.onload = init;
+            document.head.appendChild(script);
+        });
+    </script>
+</body>
+</html>

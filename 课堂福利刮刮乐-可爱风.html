@@ -1,0 +1,892 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>✨ 可爱班级福利刮刮乐 ✨</title>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #FF9EB5;
+            --secondary-color: #A2D7D8;
+            --accent-color: #FFD166;
+            --text-color: #5E6472;
+            --bg-color: #FFF8F0;
+        }
+        
+        body {
+            font-family: 'Comic Sans MS', 'Marker Felt', 'Microsoft YaHei', cursive, sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: var(--text-color);
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+            width: 100%;
+        }
+        
+        h1 {
+            color: var(--primary-color);
+            text-shadow: 3px 3px 0px rgba(0, 0, 0, 0.1);
+            font-size: 2.8rem;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #FF9EB5, #FFD166);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: inline-block;
+            padding: 0 20px;
+        }
+        
+        .instructions {
+            background-color: white;
+            padding: 20px;
+            border-radius: 20px;
+            box-shadow: 5px 5px 0px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            max-width: 800px;
+            width: 90%;
+            border: 3px dashed var(--primary-color);
+            position: relative;
+        }
+        
+        .instructions::before {
+            content: "✨";
+            position: absolute;
+            top: -15px;
+            left: -15px;
+            font-size: 24px;
+        }
+        
+        .instructions::after {
+            content: "🎀";
+            position: absolute;
+            bottom: -15px;
+            right: -15px;
+            font-size: 24px;
+        }
+        
+        .game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 800px;
+        }
+        
+        .scratch-card {
+            position: relative;
+            width: 320px;
+            height: 220px;
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%);
+            border-radius: 25px;
+            box-shadow: 10px 10px 0px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            margin-bottom: 20px;
+            border: 5px solid white;
+        }
+        
+        .scratch-area {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="%23FF9EB5" d="M12,2C6.48,2,2,6.48,2,12s4.48,10,10,10s10-4.48,10-10S17.52,2,12,2z M12,20c-4.42,0-8-3.58-8-8 s3.58-8,8-8s8,3.58,8,8S16.42,20,12,20z"/></svg>') 12 12, pointer;
+        }
+        
+        .scratch-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: repeating-linear-gradient(
+                45deg,
+                #ddd,
+                #ddd 10px,
+                #eee 10px,
+                #eee 20px
+            );
+            z-index: 1;
+        }
+        
+        .prize-content {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 0;
+            padding: 20px;
+            box-sizing: border-box;
+            text-align: center;
+            background: white;
+        }
+        
+        .prize-icon {
+            font-size: 60px;
+            margin-bottom: 10px;
+            text-shadow: 3px 3px 0px rgba(0, 0, 0, 0.1);
+        }
+        
+        .prize-name {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-bottom: 5px;
+        }
+        
+        .prize-description {
+            font-size: 16px;
+            color: var(--text-color);
+        }
+        
+        .controls {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 20px;
+            width: 100%;
+        }
+        
+        button {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            border: none;
+            color: white;
+            padding: 15px 30px;
+            font-size: 18px;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 5px 5px 0px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            margin-bottom: 15px;
+            font-family: inherit;
+            font-weight: bold;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 8px 8px 0px rgba(0, 0, 0, 0.1);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        button::after {
+            content: "";
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: rgba(255, 255, 255, 0.1);
+            transform: rotate(45deg);
+            transition: all 0.3s ease;
+        }
+        
+        button:hover::after {
+            left: 100%;
+        }
+        
+        .student-info {
+            margin-bottom: 20px;
+            width: 100%;
+            max-width: 300px;
+            position: relative;
+        }
+        
+        input, textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 3px solid var(--primary-color);
+            border-radius: 15px;
+            font-size: 16px;
+            font-family: inherit;
+            box-shadow: 3px 3px 0px rgba(0, 0, 0, 0.1);
+            background-color: white;
+        }
+        
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: var(--accent-color);
+        }
+        
+        .prize-management {
+            width: 100%;
+            max-width: 800px;
+            background-color: white;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 5px 5px 0px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            border: 3px dashed var(--secondary-color);
+        }
+        
+        .prize-management h2 {
+            color: var(--secondary-color);
+            margin-top: 0;
+            text-align: center;
+        }
+        
+        .prize-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .prize-item {
+            background-color: var(--bg-color);
+            padding: 10px 15px;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            box-shadow: 3px 3px 0px rgba(0, 0, 0, 0.1);
+            border: 2px solid var(--primary-color);
+        }
+        
+        .prize-item-icon {
+            font-size: 24px;
+            margin-right: 10px;
+        }
+        
+        .records {
+            width: 100%;
+            max-width: 800px;
+            margin-top: 30px;
+            background-color: white;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 5px 5px 0px rgba(0, 0, 0, 0.1);
+        }
+        
+        .records h2 {
+            color: var(--primary-color);
+            margin-top: 0;
+            text-align: center;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 2px solid var(--secondary-color);
+        }
+        
+        th {
+            background-color: var(--bg-color);
+            color: var(--primary-color);
+        }
+        
+        tr:nth-child(even) {
+            background-color: var(--bg-color);
+        }
+        
+        .export-btn {
+            background: linear-gradient(135deg, var(--secondary-color) 0%, #6a11cb 100%);
+            margin-top: 10px;
+        }
+        
+        .import-export {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 2.2rem;
+            }
+            
+            .scratch-card {
+                width: 280px;
+                height: 200px;
+            }
+            
+            .import-export {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>✨ 可爱班级福利刮刮乐 ✨</h1>
+    </div>
+    
+    <div class="instructions">
+        <h2>🎀 游戏说明 🎀</h2>
+        <p>1. 在下方输入你的可爱昵称</p>
+        <p>2. 点击"开始刮奖"按钮获取刮刮卡</p>
+        <p>3. 用鼠标在灰色区域刮开涂层</p>
+        <p>4. 查看你获得的班级福利</p>
+        <p>5. 可以多次刮奖，每次都会获得不同的惊喜</p>
+    </div>
+    
+    <div class="prize-management">
+        <h2>🎁 奖品管理 🎁</h2>
+        <div class="prize-list" id="prizeList">
+            <!-- 奖品将在这里动态添加 -->
+        </div>
+        <div>
+            <h3>添加新奖品</h3>
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 2fr; gap: 10px; margin-bottom: 10px;">
+                <input type="text" id="newPrizeIcon" placeholder="奖品图标" maxlength="2">
+                <input type="text" id="newPrizeName" placeholder="奖品名称">
+                <input type="number" id="newPrizeProb" placeholder="概率(0-1)" step="0.01" min="0" max="1">
+                <input type="text" id="newPrizeDesc" placeholder="奖品描述">
+            </div>
+            <button id="addPrizeBtn">添加奖品</button>
+        </div>
+        <div class="import-export">
+            <button id="importPrizesBtn">导入奖品</button>
+            <button id="exportPrizesBtn">导出奖品</button>
+            <input type="file" id="prizeFileInput" class="hidden" accept=".json">
+        </div>
+    </div>
+    
+    <div class="game-container">
+        <div class="student-info">
+            <input type="text" id="studentName" placeholder="请输入你的可爱昵称" required>
+        </div>
+        
+        <div class="scratch-card">
+            <div class="scratch-area" id="scratchArea">
+                <div class="scratch-layer" id="scratchLayer"></div>
+                <div class="prize-content" id="prizeContent">
+                    <div class="prize-icon" id="prizeIcon">🎀</div>
+                    <div class="prize-name" id="prizeName">刮开涂层查看奖品</div>
+                    <div class="prize-description" id="prizeDescription"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <button id="startBtn">🎯 开始刮奖 🎯</button>
+            <button id="resetBtn" disabled>🔄 再次刮奖 🔄</button>
+        </div>
+    </div>
+    
+    <div class="records">
+        <h2>📝 刮奖记录 📝</h2>
+        <table id="recordsTable">
+            <thead>
+                <tr>
+                    <th>姓名</th>
+                    <th>时间</th>
+                    <th>获得的福利</th>
+                </tr>
+            </thead>
+            <tbody id="recordsBody">
+                <!-- 记录将在这里动态添加 -->
+            </tbody>
+        </table>
+        <div class="import-export">
+            <button class="export-btn" id="exportBtn">💾 导出记录 💾</button>
+            <button id="clearRecordsBtn">🧹 清空记录 🧹</button>
+        </div>
+    </div>
+    
+    <audio id="scratchSound" src="https://www.soundjay.com/mechanical/sounds/scratch-01.mp3" preload="auto"></audio>
+    <audio id="winSound" src="https://www.soundjay.com/human/sounds/applause-8.mp3" preload="auto"></audio>
+    
+    <script>
+        // 默认奖品数据
+        let prizes = [
+            { 
+                name: "免作业券", 
+                description: "可以免除一次家庭作业", 
+                icon: "📝",
+                probability: 0.1
+            },
+            { 
+                name: "优先选择座位权", 
+                description: "下次换座位时可以优先选择位置", 
+                icon: "💺",
+                probability: 0.1
+            },
+            { 
+                name: "班级小礼品", 
+                description: "获得精美小礼品一份", 
+                icon: "🎁",
+                probability: 0.15
+            },
+            { 
+                name: "老师表扬信", 
+                description: "获得老师亲笔签名的表扬信", 
+                icon: "📜",
+                probability: 0.1
+            },
+            { 
+                name: "课间点歌权", 
+                description: "可以在课间播放一首自己喜欢的歌曲", 
+                icon: "🎵",
+                probability: 0.1
+            },
+            { 
+                name: "值日生豁免券", 
+                description: "可以免除一次值日生职责", 
+                icon: "🧹",
+                probability: 0.1
+            },
+            { 
+                name: "班级活动策划权", 
+                description: "可以参与策划下一次班级活动", 
+                icon: "🗓️",
+                probability: 0.05
+            },
+            { 
+                name: "自习课特权", 
+                description: "可以在自习课上使用耳机听音乐", 
+                icon: "🎧",
+                probability: 0.05
+            },
+            { 
+                name: "午餐加鸡腿", 
+                description: "获得食堂加鸡腿券一张", 
+                icon: "🍗",
+                probability: 0.1
+            },
+            { 
+                name: "班级小记者", 
+                description: "担任一周班级活动记录员", 
+                icon: "📷",
+                probability: 0.05
+            }
+        ];
+        
+        // 调整概率确保总和为1
+        function normalizeProbabilities() {
+            const total = prizes.reduce((sum, prize) => sum + prize.probability, 0);
+            prizes.forEach(prize => {
+                prize.probability /= total;
+            });
+        }
+        
+        // 渲染奖品列表
+        function renderPrizeList() {
+            const prizeList = document.getElementById('prizeList');
+            prizeList.innerHTML = '';
+            
+            prizes.forEach((prize, index) => {
+                const prizeItem = document.createElement('div');
+                prizeItem.className = 'prize-item';
+                prizeItem.innerHTML = `
+                    <div class="prize-item-icon">${prize.icon}</div>
+                    <div>
+                        <div><strong>${prize.name}</strong></div>
+                        <div>概率: ${(prize.probability * 100).toFixed(1)}%</div>
+                    </div>
+                    <button class="delete-prize" data-index="${index}" style="margin-left: auto; background: none; border: none; cursor: pointer; font-size: 16px;">❌</button>
+                `;
+                prizeList.appendChild(prizeItem);
+            });
+            
+            // 添加删除事件
+            document.querySelectorAll('.delete-prize').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const index = parseInt(this.getAttribute('data-index'));
+                    prizes.splice(index, 1);
+                    renderPrizeList();
+                    normalizeProbabilities();
+                });
+            });
+        }
+        
+        // 获取DOM元素
+        const scratchArea = document.getElementById('scratchArea');
+        const scratchLayer = document.getElementById('scratchLayer');
+        const prizeContent = document.getElementById('prizeContent');
+        const prizeIcon = document.getElementById('prizeIcon');
+        const prizeName = document.getElementById('prizeName');
+        const prizeDescription = document.getElementById('prizeDescription');
+        const startBtn = document.getElementById('startBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const studentNameInput = document.getElementById('studentName');
+        const recordsBody = document.getElementById('recordsBody');
+        const exportBtn = document.getElementById('exportBtn');
+        const scratchSound = document.getElementById('scratchSound');
+        const winSound = document.getElementById('winSound');
+        const addPrizeBtn = document.getElementById('addPrizeBtn');
+        const newPrizeIcon = document.getElementById('newPrizeIcon');
+        const newPrizeName = document.getElementById('newPrizeName');
+        const newPrizeProb = document.getElementById('newPrizeProb');
+        const newPrizeDesc = document.getElementById('newPrizeDesc');
+        const importPrizesBtn = document.getElementById('importPrizesBtn');
+        const exportPrizesBtn = document.getElementById('exportPrizesBtn');
+        const prizeFileInput = document.getElementById('prizeFileInput');
+        const clearRecordsBtn = document.getElementById('clearRecordsBtn');
+        
+        // 刮刮卡变量
+        let isScratching = false;
+        let isScratched = false;
+        let currentPrize = null;
+        let canvas = null;
+        let ctx = null;
+        
+        // 初始化刮刮卡
+        function initScratchCard() {
+            // 创建canvas覆盖在刮层上
+            canvas = document.createElement('canvas');
+            canvas.width = scratchLayer.offsetWidth;
+            canvas.height = scratchLayer.offsetHeight;
+            canvas.style.position = 'absolute';
+            canvas.style.top = '0';
+            canvas.style.left = '0';
+            canvas.style.zIndex = '2';
+            
+            // 移除旧的canvas（如果有）
+            const oldCanvas = scratchLayer.querySelector('canvas');
+            if (oldCanvas) {
+                scratchLayer.removeChild(oldCanvas);
+            }
+            
+            scratchLayer.appendChild(canvas);
+            ctx = canvas.getContext('2d');
+            
+            // 设置canvas样式
+            ctx.fillStyle = '#ddd';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.globalCompositeOperation = 'destination-out';
+            
+            // 添加事件监听
+            canvas.addEventListener('mousedown', startScratch);
+            canvas.addEventListener('mousemove', scratch);
+            canvas.addEventListener('mouseup', endScratch);
+            canvas.addEventListener('mouseleave', endScratch);
+            
+            // 触摸设备支持
+            canvas.addEventListener('touchstart', handleTouch);
+            canvas.addEventListener('touchmove', handleTouch);
+            canvas.addEventListener('touchend', endScratch);
+        }
+        
+        // 开始刮卡
+        function startScratch(e) {
+            isScratching = true;
+            scratch(e);
+            
+            // 播放刮卡音效
+            if (scratchSound) {
+                scratchSound.currentTime = 0;
+                scratchSound.play().catch(e => console.log('无法播放音效:', e));
+            }
+        }
+        
+        // 刮卡过程
+        function scratch(e) {
+            if (!isScratching) return;
+            
+            const rect = canvas.getBoundingClientRect();
+            let x, y;
+            
+            if (e.type.includes('touch')) {
+                x = e.touches[0].clientX - rect.left;
+                y = e.touches[0].clientY - rect.top;
+            } else {
+                x = e.clientX - rect.left;
+                y = e.clientY - rect.top;
+            }
+            
+            ctx.beginPath();
+            ctx.arc(x, y, 15, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // 检查刮开面积是否超过30%
+            checkScratched();
+        }
+        
+        // 结束刮卡
+        function endScratch() {
+            isScratching = false;
+        }
+        
+        // 处理触摸事件
+        function handleTouch(e) {
+            e.preventDefault();
+            if (e.type === 'touchstart') {
+                startScratch(e);
+            } else if (e.type === 'touchmove') {
+                scratch(e);
+            }
+        }
+        
+        // 检查刮开面积
+        function checkScratched() {
+            if (isScratched) return;
+            
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const pixels = imageData.data;
+            let transparentPixels = 0;
+            
+            for (let i = 3; i < pixels.length; i += 4) {
+                if (pixels[i] === 0) {
+                    transparentPixels++;
+                }
+            }
+            
+            const transparentRatio = transparentPixels / (pixels.length / 4);
+            
+            if (transparentRatio > 0.3) {
+                isScratched = true;
+                revealPrize();
+            }
+        }
+        
+        // 显示奖品
+        function revealPrize() {
+            prizeIcon.textContent = currentPrize.icon;
+            prizeName.textContent = currentPrize.name;
+            prizeDescription.textContent = currentPrize.description;
+            
+            // 播放中奖音效
+            if (winSound) {
+                winSound.play().catch(e => console.log('无法播放音效:', e));
+            }
+            
+            // 触发彩带效果
+            confetti({
+                particleCount: 150,
+                spread: 90,
+                origin: { y: 0.6 },
+                colors: ['#FF9EB5', '#A2D7D8', '#FFD166', '#FFFFFF']
+            });
+            
+            // 记录刮奖结果
+            addRecord();
+        }
+        
+        // 随机选择奖品
+        function selectRandomPrize() {
+            if (prizes.length === 0) {
+                return {
+                    name: "暂无奖品",
+                    description: "请先添加奖品",
+                    icon: "❓",
+                    probability: 1
+                };
+            }
+            
+            const random = Math.random();
+            let cumulativeProbability = 0;
+            
+            for (const prize of prizes) {
+                cumulativeProbability += prize.probability;
+                if (random <= cumulativeProbability) {
+                    return prize;
+                }
+            }
+            
+            return prizes[0]; // 默认返回第一个奖品
+        }
+        
+        // 开始新的刮奖
+        function startNewScratch() {
+            const studentName = studentNameInput.value.trim();
+            if (!studentName) {
+                alert('请输入你的可爱昵称');
+                return;
+            }
+            
+            if (prizes.length === 0) {
+                alert('请先添加奖品');
+                return;
+            }
+            
+            currentPrize = selectRandomPrize();
+            isScratched = false;
+            
+            // 重置刮刮卡
+            initScratchCard();
+            
+            // 隐藏奖品内容
+            prizeIcon.textContent = '？';
+            prizeName.textContent = '刮开涂层查看奖品';
+            prizeDescription.textContent = '';
+            
+            // 禁用开始按钮，启用重置按钮
+            startBtn.disabled = true;
+            resetBtn.disabled = false;
+        }
+        
+        // 重置刮刮卡
+        function resetScratch() {
+            startNewScratch();
+        }
+        
+        // 添加记录
+        function addRecord() {
+            const studentName = studentNameInput.value.trim();
+            if (!studentName || !currentPrize) return;
+            
+            const now = new Date();
+            const timeString = now.toLocaleString();
+            
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${studentName}</td>
+                <td>${timeString}</td>
+                <td>${currentPrize.icon} ${currentPrize.name}</td>
+            `;
+            
+            recordsBody.appendChild(row);
+        }
+        
+        // 导出记录
+        function exportRecords() {
+            const rows = Array.from(recordsBody.querySelectorAll('tr'));
+            if (rows.length === 0) {
+                alert('没有记录可导出');
+                return;
+            }
+            
+            let csvContent = "姓名,时间,获得的福利\n";
+            
+            rows.forEach(row => {
+                const cells = row.querySelectorAll('td');
+                const name = cells[0].textContent;
+                const time = cells[1].textContent;
+                const prize = cells[2].textContent.replace(/,/g, '，'); // 避免逗号冲突
+                csvContent += `${name},${time},${prize}\n`;
+            });
+            
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.setAttribute('href', url);
+            link.setAttribute('download', `班级福利刮刮乐记录_${new Date().toLocaleDateString()}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+        
+        // 添加奖品
+        function addPrize() {
+            const icon = newPrizeIcon.value.trim();
+            const name = newPrizeName.value.trim();
+            const prob = parseFloat(newPrizeProb.value);
+            const desc = newPrizeDesc.value.trim();
+            
+            if (!icon || !name || isNaN(prob) || !desc) {
+                alert('请填写完整的奖品信息');
+                return;
+            }
+            
+            if (prob <= 0 || prob > 1) {
+                alert('概率必须在0到1之间');
+                return;
+            }
+            
+            prizes.push({
+                icon,
+                name,
+                probability: prob,
+                description: desc
+            });
+            
+            // 清空输入框
+            newPrizeIcon.value = '';
+            newPrizeName.value = '';
+            newPrizeProb.value = '';
+            newPrizeDesc.value = '';
+            
+            // 重新计算概率
+            normalizeProbabilities();
+            renderPrizeList();
+        }
+        
+        // 导出奖品
+        function exportPrizes() {
+            if (prizes.length === 0) {
+                alert('没有奖品可导出');
+                return;
+            }
+            
+            const data = {
+                prizes: prizes,
+                exportedAt: new Date().toISOString()
+            };
+            
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.setAttribute('href', url);
+            link.setAttribute('download', `班级福利奖品_${new Date().toLocaleDateString()}.json`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+        
+        // 导入奖品
+        function importPrizes(file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (Array.isArray(data.prizes)) {
+                        prizes = data.prizes;
+                        normalizeProbabilities();
+                        renderPrizeList();
+                        alert(`成功导入 ${prizes.length} 个奖品`);
+                    } else {
+                        alert('无效的奖品数据格式');
+                    }
+                } catch (error) {
+                    alert('读取文件失败: ' + error.message);
+                }
+            };
+            reader.readAsText(file);
+        }
+        
+        // 清空记录
+        function clearRecords() {
+            if (confirm('确定要清空所有刮奖记录吗？此操作不可恢复！')) {
+                recordsBody.innerHTML = '';
+            }
+        }
+        
+        // 事件监听
+        startBtn.addEventListener('click', startNewScratch);
+        resetBtn.addEventListener('click', resetScratch);
+        exportBtn.addEventListener('click', exportRecords);
+        addPrizeBtn.addEventListener('click', addPrize);
+        exportPrizesBtn.addEventListener('click', exportPrizes);
+        importPrizesBtn.addEventListener('click', () => prizeFileInput.click());
+        prizeFileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                importPrizes(e.target.files[0]);
+                e.target.value = ''; // 重置文件输入
+            }
+        });
+        clearRecordsBtn.addEventListener('click', clearRecords);
+        
+        // 初始化
+        normalizeProbabilities();
+        renderPrizeList();
+        initScratchCard();
+    </script>
+</body>
+</html>

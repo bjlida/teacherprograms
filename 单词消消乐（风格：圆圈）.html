@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>课堂单词消消乐</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', 'Roboto', sans-serif;
+        }
+        
+        body {
+            background-color: #FFF9F0; /* 柔和的奶白色背景 */
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        h1 {
+            color: #1A3E72; /* 深蓝色标题 */
+            font-size: clamp(24px, 5vw, 40px);
+            font-weight: 800;
+            text-align: center;
+            margin: 20px 0 40px;
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .timer {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 10px 15px;
+            border-radius: 20px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            color: #1A3E72;
+            font-weight: 600;
+        }
+        
+        .game-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 20px;
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .bubble {
+            width: 100%;
+            aspect-ratio: 1/1;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: clamp(14px, 2vw, 20px);
+            text-align: center;
+            cursor: pointer;
+            user-select: none;
+            transition: transform 0.2s, opacity 0.3s;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            padding: 10px;
+            word-break: break-word;
+            transform: scale(1);
+        }
+        
+        .bubble:hover {
+            transform: scale(1.05);
+        }
+        
+        .bubble:active {
+            transform: scale(0.95);
+        }
+        
+        .bubble.hidden {
+            opacity: 0;
+            pointer-events: none;
+            transform: scale(0);
+        }
+        
+        .bubble.removed {
+            opacity: 0;
+            pointer-events: none;
+            transform: scale(0);
+        }
+        
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+            z-index: 100;
+        }
+        
+        .modal.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+        
+        .modal-content {
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            max-width: 80%;
+            animation: fadeIn 0.5s;
+        }
+        
+        .modal h2 {
+            color: #2E7D32; /* 绿色成功文字 */
+            margin-bottom: 20px;
+            font-size: clamp(20px, 4vw, 28px);
+        }
+        
+        .modal p {
+            color: #1A3E72;
+            font-size: clamp(16px, 3vw, 20px);
+            margin-bottom: 20px;
+        }
+        
+        .restart-btn {
+            background-color: #1A3E72;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .restart-btn:hover {
+            background-color: #0D2B56;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @media (max-width: 600px) {
+            .game-container {
+                grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+                gap: 15px;
+            }
+            
+            .bubble {
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>课堂单词消消乐</h1>
+    <div class="timer">时间: 00:00</div>
+    <div class="game-container" id="gameContainer"></div>
+    
+    <div class="modal" id="successModal">
+        <div class="modal-content">
+            <h2>恭喜你挑战成功！</h2>
+            <p id="completionTime">完成时间: 00:00</p>
+            <button class="restart-btn" id="restartBtn">再玩一次</button>
+        </div>
+    </div>
+    
+    <audio id="clickSound" src="data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU..."></audio>
+    <audio id="successSound" src="data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU..."></audio>
+    
+    <script>
+        // 单词数据 - 针对六年级学生水平
+        const wordPairs = [
+            { chinese: "苹果", english: "apple" },
+            { chinese: "香蕉", english: "banana" },
+            { chinese: "猫", english: "cat" },
+            { chinese: "狗", english: "dog" },
+            { chinese: "红色", english: "red" },
+            { chinese: "蓝色", english: "blue" },
+            { chinese: "学校", english: "school" },
+            { chinese: "老师", english: "teacher" },
+            { chinese: "学生", english: "student" },
+            { chinese: "书", english: "book" },
+            { chinese: "钢笔", english: "pen" },
+            { chinese: "桌子", english: "desk" },
+            { chinese: "椅子", english: "chair" },
+            { chinese: "窗户", english: "window" },
+            { chinese: "门", english: "door" },
+            { chinese: "一", english: "one" },
+            { chinese: "二", english: "two" },
+            { chinese: "三", english: "three" },
+            { chinese: "妈妈", english: "mother" },
+            { chinese: "爸爸", english: "father" }
+        ];
+        
+        // 游戏状态
+        let gameState = {
+            selectedBubble: null,
+            matchedPairs: 0,
+            totalPairs: 0,
+            timer: null,
+            seconds: 0,
+            isProcessing: false
+        };
+        
+        // DOM 元素
+        const gameContainer = document.getElementById('gameContainer');
+        const timerDisplay = document.querySelector('.timer');
+        const successModal = document.getElementById('successModal');
+        const completionTimeDisplay = document.getElementById('completionTime');
+        const restartBtn = document.getElementById('restartBtn');
+        const clickSound = document.getElementById('clickSound');
+        const successSound = document.getElementById('successSound');
+        
+        // 初始化游戏
+        function initGame() {
+            gameContainer.innerHTML = '';
+            gameState.selectedBubble = null;
+            gameState.matchedPairs = 0;
+            gameState.isProcessing = false;
+            
+            // 随机选择8-10对单词（根据屏幕大小调整）
+            const pairsCount = window.innerWidth < 600 ? 8 : 10;
+            const selectedPairs = getRandomPairs(pairsCount);
+            gameState.totalPairs = selectedPairs.length;
+            
+            // 创建泡泡元素
+            const allWords = [];
+            selectedPairs.forEach(pair => {
+                allWords.push({ text: pair.chinese, type: 'chinese', pairId: pair.id });
+                allWords.push({ text: pair.english, type: 'english', pairId: pair.id });
+            });
+            
+            // 打乱顺序
+            shuffleArray(allWords);
+            
+            // 添加到游戏区域
+            allWords.forEach((word, index) => {
+                const bubble = document.createElement('div');
+                bubble.className = 'bubble';
+                bubble.textContent = word.text;
+                bubble.dataset.type = word.type;
+                bubble.dataset.pairId = word.pairId;
+                bubble.style.backgroundColor = getBubbleColor(index);
+                
+                bubble.addEventListener('click', handleBubbleClick);
+                gameContainer.appendChild(bubble);
+            });
+            
+            // 重置计时器
+            resetTimer();
+            startTimer();
+        }
+        
+        // 获取随机单词对
+        function getRandomPairs(count) {
+            // 复制原始数组
+            const shuffled = [...wordPairs].sort(() => 0.5 - Math.random());
+            // 添加唯一ID
+            return shuffled.slice(0, count).map((pair, index) => ({
+                ...pair,
+                id: index
+            }));
+        }
+        
+        // 打乱数组顺序
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+        
+        // 获取泡泡颜色
+        function getBubbleColor(index) {
+            const colors = [
+                '#4FC3F7', // 浅蓝
+                '#81C784', // 浅绿
+                '#FF8A65', // 浅橙
+                '#BA68C8', // 浅紫
+                '#4DB6AC', // 浅青
+                '#FFD54F', // 浅黄
+                '#E57373', // 浅红
+                '#7986CB', // 浅靛
+                '#A1887F', // 浅棕
+                '#90A4AE'  // 浅灰蓝
+            ];
+            return colors[index % colors.length];
+        }
+        
+        // 处理泡泡点击
+        function handleBubbleClick(e) {
+            if (gameState.isProcessing) return;
+            
+            const bubble = e.target;
+            
+            // 播放点击音效
+            playSound(clickSound);
+            
+            // 动画效果
+            bubble.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                bubble.style.transform = 'scale(1)';
+            }, 200);
+            
+            // 如果已经隐藏或已匹配，则忽略
+            if (bubble.classList.contains('hidden') || bubble.classList.contains('removed')) {
+                return;
+            }
+            
+            // 如果没有选中的泡泡，选中当前泡泡
+            if (!gameState.selectedBubble) {
+                gameState.selectedBubble = bubble;
+                bubble.classList.add('hidden');
+                return;
+            }
+            
+            // 如果点击的是同一个泡泡，不做任何操作
+            if (gameState.selectedBubble === bubble) {
+                return;
+            }
+            
+            // 检查是否匹配
+            gameState.isProcessing = true;
+            bubble.classList.add('hidden');
+            
+            const firstBubble = gameState.selectedBubble;
+            const secondBubble = bubble;
+            
+            // 检查是否匹配
+            const isMatch = (
+                (firstBubble.dataset.type !== secondBubble.dataset.type) && 
+                (firstBubble.dataset.pairId === secondBubble.dataset.pairId)
+            );
+            
+            if (isMatch) {
+                // 匹配成功
+                setTimeout(() => {
+                    firstBubble.classList.remove('hidden');
+                    firstBubble.classList.add('removed');
+                    secondBubble.classList.remove('hidden');
+                    secondBubble.classList.add('removed');
+                    
+                    gameState.matchedPairs++;
+                    gameState.selectedBubble = null;
+                    gameState.isProcessing = false;
+                    
+                    // 检查游戏是否结束
+                    checkGameCompletion();
+                }, 500);
+            } else {
+                // 不匹配
+                setTimeout(() => {
+                    firstBubble.classList.remove('hidden');
+                    secondBubble.classList.remove('hidden');
+                    gameState.selectedBubble = null;
+                    gameState.isProcessing = false;
+                }, 1000);
+            }
+        }
+        
+        // 检查游戏是否完成
+        function checkGameCompletion() {
+            if (gameState.matchedPairs === gameState.totalPairs) {
+                // 游戏结束
+                stopTimer();
+                showSuccessModal();
+                playSound(successSound);
+            }
+        }
+        
+        // 显示成功模态框
+        function showSuccessModal() {
+            const minutes = Math.floor(gameState.seconds / 60).toString().padStart(2, '0');
+            const seconds = (gameState.seconds % 60).toString().padStart(2, '0');
+            completionTimeDisplay.textContent = `完成时间: ${minutes}:${seconds}`;
+            successModal.classList.add('active');
+        }
+        
+        // 计时器函数
+        function startTimer() {
+            gameState.seconds = 0;
+            updateTimerDisplay();
+            gameState.timer = setInterval(() => {
+                gameState.seconds++;
+                updateTimerDisplay();
+            }, 1000);
+        }
+        
+        function stopTimer() {
+            clearInterval(gameState.timer);
+        }
+        
+        function resetTimer() {
+            stopTimer();
+            gameState.seconds = 0;
+            updateTimerDisplay();
+        }
+        
+        function updateTimerDisplay() {
+            const minutes = Math.floor(gameState.seconds / 60).toString().padStart(2, '0');
+            const seconds = (gameState.seconds % 60).toString().padStart(2, '0');
+            timerDisplay.textContent = `时间: ${minutes}:${seconds}`;
+        }
+        
+        // 播放音效
+        function playSound(audioElement) {
+            audioElement.currentTime = 0;
+            audioElement.play().catch(e => console.log("音频播放被阻止:", e));
+        }
+        
+        // 重新开始游戏
+        restartBtn.addEventListener('click', () => {
+            successModal.classList.remove('active');
+            initGame();
+        });
+        
+        // 初始化游戏
+        initGame();
+    </script>
+</body>
+</html>
